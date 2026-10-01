@@ -283,7 +283,7 @@ button{font:inherit}
     </div>
   </section>
 
-  <div class="footer">역사 탐정소 v4.0 · 실제 스탬프 완전 적용판 · 총 44개 사건</div>
+  <div class="footer">역사 탐정소 v5.0.1 · 네비게이션 개선판 · 총 44개 사건</div>
 </div>
 
 <div class="modal" id="overviewModal" onclick="if(event.target===this)hideOverview()">
@@ -296,7 +296,7 @@ button{font:inherit}
 <div class="viewer" id="viewer">
   <div class="viewerbar">
     <div class="viewer-left">
-      <button class="vbtn" onclick="closeCase()">← 탐정사무소</button>
+      <button class="vbtn" id="viewerBackBtn" onclick="closeCase()">← 이전 화면</button>
       <div class="viewer-title" id="viewerTitle"></div>
     </div>
     <button class="vbtn" onclick="refreshCase()">↻ 사건 다시 열기</button>
@@ -345,6 +345,28 @@ function toast(msg){
   t.textContent=msg;t.classList.add("show");
   setTimeout(()=>t.classList.remove("show"),1800);
 }
+
+function updateViewerBackLabel(){
+  const btn=document.getElementById("viewerBackBtn");
+  if(!btn) return;
+  if(document.getElementById("unitPage").classList.contains("show") && currentUnit){
+    btn.textContent="← 단원 사건 목록";
+  }else if(document.getElementById("notebookPage").classList.contains("show")){
+    btn.textContent="← 탐정 수첩";
+  }else{
+    btn.textContent="← 탐정사무소";
+  }
+}
+
+window.historyDetectiveNavigate={
+  home(){ closeCase(); showHome(); },
+  notebook(){ closeCase(); showNotebook(); },
+  unitByCode(code){
+    const c=CASES.find(x=>x.code===code);
+    closeCase();
+    if(c) openUnit(c.unit); else showHome();
+  }
+};
 
 function updateProgress(){
   const n=countSolved(), pct=Math.round(n/CASES.length*1000)/10;
@@ -437,12 +459,21 @@ function decodeBase64Utf8(b64){
 }
 
 const PACING_GUARD_JS = "\n(function(){\n  let pacingPendingClue = null;\n  let pacingPendingBtn = null;\n  let pacingTimer = null;\n  let pacingSeconds = 0;\n\n  const originalCloseModal = (typeof window.closeModal === 'function') ? window.closeModal : null;\n\n  function getEl(id){ return document.getElementById(id); }\n  function clearPacingTimer(){\n    if(pacingTimer){ clearInterval(pacingTimer); pacingTimer = null; }\n  }\n  function clueActionButton(){\n    const modal = getEl('clueModal');\n    if(!modal) return null;\n    const buttons = modal.querySelectorAll('.modal-card .btn');\n    return buttons.length ? buttons[buttons.length - 1] : null;\n  }\n  function setAction(text, disabled, handler){\n    const b = clueActionButton();\n    if(!b) return;\n    b.textContent = text;\n    b.disabled = !!disabled;\n    b.removeAttribute('onclick');\n    b.onclick = handler || null;\n  }\n  function genericCompleteMessage(){\n    return '단서 수집 완료. 이제 자료를 해석해 보세요.';\n  }\n  function markClueConfirmed(){\n    const n = pacingPendingClue;\n    const btn = pacingPendingBtn;\n    if(n == null || !btn) return;\n    const d = clueData[n];\n    if(!found.has(n)){\n      found.add(n);\n      btn.classList.add('found');\n      const count = getEl('clueCountHud');\n      if(count) count.textContent = found.size;\n      const log = getEl('log' + n);\n      if(log){\n        log.classList.remove('lock');\n        log.innerHTML = '<b>' + d.title + '</b><br><span class=\"small\">' + d.points[0] + '</span>';\n      }\n      const fb = getEl('sceneFb');\n      if(fb) fb.textContent = d.title + ' 단서를 확인했습니다.';\n      if(found.size >= 4){\n        if(fb) fb.textContent = genericCompleteMessage();\n        function enableInterpretationButton(){\n          let q = getEl('toQuiz');\n          if(!q){ q = document.querySelector('button[onclick*=\"goStage(3)\"]:not(.secondary)'); }\n          if(q){\n            q.disabled = false;\n            q.removeAttribute('disabled');\n            q.removeAttribute('aria-disabled');\n            q.style.pointerEvents = 'auto';\n            q.style.opacity = '1';\n            q.style.cursor = 'pointer';\n          }\n        }\n        enableInterpretationButton();\n        setTimeout(enableInterpretationButton, 0);\n        setTimeout(enableInterpretationButton, 120);\n      }\n    }\n    window.closeModal();\n  }\n\n  window.closeModal = function(){\n    clearPacingTimer();\n    pacingPendingClue = null;\n    pacingPendingBtn = null;\n    if(originalCloseModal) return originalCloseModal();\n    const modal = getEl('clueModal');\n    if(modal){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }\n  };\n\n  window.showClue = function(n, btn){\n    const d = clueData[n];\n    if(!d) return;\n    const modal = getEl('clueModal');\n    const icon = getEl('modalIcon'), code = getEl('modalCode'), title = getEl('modalTitle');\n    const desc = getEl('modalDesc'), points = getEl('modalPoints');\n    if(icon) icon.textContent = d.icon || '';\n    if(code) code.textContent = d.code || '';\n    if(title) title.textContent = d.title || '';\n    if(desc) desc.textContent = d.desc || '';\n    if(points) points.innerHTML = (d.points || []).map(function(p){ return '<li>' + p + '</li>'; }).join('');\n    if(modal){ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); }\n\n    clearPacingTimer();\n    pacingPendingClue = n;\n    pacingPendingBtn = btn;\n\n    if(found.has(n)){\n      setAction('이미 확인한 단서 · 닫기', false, window.closeModal);\n      return;\n    }\n\n    pacingSeconds = 4;\n    setAction('단서 읽는 중 · 4초', true, null);\n    pacingTimer = setInterval(function(){\n      pacingSeconds -= 1;\n      if(pacingSeconds > 0){\n        setAction('단서 읽는 중 · ' + pacingSeconds + '초', true, null);\n      } else {\n        clearPacingTimer();\n        setAction('✓ 단서 확인 완료', false, markClueConfirmed);\n      }\n    }, 1000);\n  };\n\n  function lockQuestion(box, ms, permanent){\n    if(!box) return;\n    const options = Array.prototype.slice.call(box.querySelectorAll('.option'));\n    options.forEach(function(o){\n      o.style.pointerEvents = 'none';\n      if(!permanent) o.style.opacity = '.68';\n    });\n    if(permanent){ box.dataset.pacingSolved = '1'; return; }\n    box.dataset.pacingBusy = '1';\n    setTimeout(function(){\n      if(box.dataset.pacingSolved === '1') return;\n      delete box.dataset.pacingBusy;\n      options.forEach(function(o){ o.style.pointerEvents = ''; o.style.opacity = ''; });\n    }, ms);\n  }\n\n  function wrapAnswerFunction(name){\n    const original = window[name];\n    if(typeof original !== 'function') return;\n    window[name] = function(el, n){\n      const box = el && el.parentElement;\n      if(box && (box.dataset.pacingBusy === '1' || box.dataset.pacingSolved === '1')) return;\n      original(el, n);\n      if(!el) return;\n      if(el.classList.contains('correct')){\n        lockQuestion(box, 0, true);\n      } else if(el.classList.contains('wrong')){\n        const feedback = box ? box.querySelector('.feedback') : null;\n        if(feedback && feedback.textContent.indexOf('2초 뒤') === -1){\n          feedback.textContent += ' · 피드백을 읽고 2초 뒤 다시 선택하세요.';\n        }\n        lockQuestion(box, 2000, false);\n      }\n    };\n  }\n\n  ['checkQ1','checkQ2','checkFinal'].forEach(wrapAnswerFunction);\n\n  if(typeof window.checkMatch === 'function'){\n    const originalCheckMatch = window.checkMatch;\n    let matchBusy = false;\n    window.checkMatch = function(){\n      if(matchBusy) return;\n      originalCheckMatch();\n      if(typeof matchOK !== 'undefined' && !matchOK){\n        const b = document.querySelector('button[onclick=\"checkMatch()\"]');\n        matchBusy = true;\n        if(b){ b.disabled = true; b.textContent = '단서 다시 확인 중…'; }\n        setTimeout(function(){\n          matchBusy = false;\n          if(b){ b.disabled = false; b.textContent = '연결 확인'; }\n        }, 2000);\n      }\n    };\n  }\n})();\n";
-function patchCaseForPacing(caseHtml){
-  if(caseHtml.includes('data-pacing-guard="v4.2"')) return caseHtml;
-  const style = '<style data-pacing-guard="v4.2">#clueModal .btn:disabled{opacity:.52;cursor:wait} .option{transition:opacity .15s ease}</style>';
-  const scriptOpen = '<script data-pacing-guard="v4.2">';
+const NAVIGATION_GUARD_JS = '(function(){\n  function safeParentCall(name,arg){\n    try{\n      if(parent && parent.historyDetectiveNavigate && typeof parent.historyDetectiveNavigate[name] === \'function\'){\n        parent.historyDetectiveNavigate[name](arg);\n        return true;\n      }\n    }catch(e){}\n    return false;\n  }\n\n  window.goUnitListFromReward=function(){\n    if(typeof window.closeReward===\'function\') window.closeReward();\n    safeParentCall(\'unitByCode\',\'__CASE_CODE__\');\n  };\n  window.goHomeFromReward=function(){\n    if(typeof window.closeReward===\'function\') window.closeReward();\n    safeParentCall(\'home\');\n  };\n  window.goNotebookFromReward=function(){\n    if(typeof window.closeReward===\'function\') window.closeReward();\n    if(!safeParentCall(\'notebook\') && typeof window.openNotebook===\'function\') window.openNotebook();\n  };\n\n  const reward=document.getElementById(\'rewardModal\');\n  if(!reward) return;\n  const nav=reward.querySelector(\'.nav\');\n  if(!nav) return;\n  nav.classList.add(\'reward-nav-v501\');\n  nav.style.justifyContent=\'center\';\n  nav.style.gap=\'10px\';\n  nav.style.flexWrap=\'wrap\';\n  nav.innerHTML=\'\'\n    + \'<button class="btn secondary" onclick="goUnitListFromReward()">같은 단원 사건 보기</button>\'\n    + \'<button class="btn secondary" onclick="goHomeFromReward()">탐정사무소 메인</button>\'\n    + \'<button class="btn" onclick="goNotebookFromReward()">탐정 수첩 확인</button>\';\n\n  if(!reward.querySelector(\'.reward-nav-help-v501\')){\n    const help=document.createElement(\'div\');\n    help.className=\'small reward-nav-help-v501\';\n    help.style.marginTop=\'10px\';\n    help.style.color=\'var(--muted)\';\n    help.textContent=\'스탬프 확인 후 원하는 화면으로 이동하세요.\';\n    nav.insertAdjacentElement(\'afterend\',help);\n  }\n})();';
+function patchCaseForPacing(caseHtml, code){
   const scriptClose = '</scr' + 'ipt>';
-  const guard = style + scriptOpen + PACING_GUARD_JS + scriptClose;
+  let guard = '';
+  if(!caseHtml.includes('data-pacing-guard="v4.2"')){
+    const style = '<style data-pacing-guard="v4.2">#clueModal .btn:disabled{opacity:.52;cursor:wait} .option{transition:opacity .15s ease}</style>';
+    const scriptOpen = '<script data-pacing-guard="v4.2">';
+    guard += style + scriptOpen + PACING_GUARD_JS + scriptClose;
+  }
+  if(!caseHtml.includes('data-navigation-guard="v5.0.1"')){
+    const navOpen = '<script data-navigation-guard="v5.0.1">';
+    const navCode = NAVIGATION_GUARD_JS.replace('__CASE_CODE__', code);
+    guard += navOpen + navCode + scriptClose;
+  }
+  if(!guard) return caseHtml;
   return caseHtml.includes('</body>') ? caseHtml.replace('</body>', guard + '</body>') : caseHtml + guard;
 }
 
@@ -498,7 +529,7 @@ function setCaseFrameFromCode(code){
     return;
   }
   const balanced = rebalanceCaseHtml(code, decodeBase64Utf8(b64));
-  document.getElementById("caseFrame").srcdoc=patchCaseForPacing(balanced);
+  document.getElementById("caseFrame").srcdoc=patchCaseForPacing(balanced, code);
 }
 
 function loadCaseData(code, done){
@@ -530,6 +561,7 @@ function openCase(code){
   activeCaseCode=code;
   try{localStorage.setItem("history_detective_last_case",code)}catch(e){}
   document.getElementById("viewerTitle").textContent=`CASE ${code} · ${c.title}`;
+  updateViewerBackLabel();
   document.getElementById("viewer").classList.add("show");
   document.body.style.overflow="hidden";
   document.getElementById("caseFrame").srcdoc=caseLoadingHtml(code,c.title);
@@ -556,6 +588,7 @@ function closeCase(){
     showNotebook();
   }
   activeCaseCode=null;
+  updateViewerBackLabel();
 }
 
 function refreshCase(){
