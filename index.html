@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>역사 탐정사무소 v3</title>
+<style>
+:root{
+  --ink:#2f251f; --paper:#fff8e9; --paper2:#ead5b2;
+  --wood:#65412c; --red:#93463c; --green:#4b6655;
+  --gold:#c49549; --line:#b8946c; --shadow:rgba(28,17,10,.28);
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;font-family:"Pretendard","Noto Sans KR",system-ui,sans-serif;color:var(--ink)}
+body{
+  background:
+    radial-gradient(circle at 50% -20%,rgba(255,232,190,.20),transparent 45%),
+    linear-gradient(180deg,#3b2a20,#5b3c2b 45%,#3d2a20);
+}
+button{font:inherit}
+.app{max-width:1480px;margin:auto;padding:14px 16px 42px}
+
+.topbar{
+  position:sticky;top:8px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:10px 14px;border-radius:17px;
+  background:rgba(255,247,231,.96);border:1px solid #b99570;
+  box-shadow:0 9px 26px rgba(0,0,0,.24);backdrop-filter:blur(9px)
+}
+.brand{display:flex;align-items:center;gap:11px}
+.seal{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:#463126;color:#fff;border:4px double #d4b16e;font-weight:950;font-size:21px}
+.brand-title{font-size:19px;font-weight:950} .small{font-size:12px;color:#75675a}
+.stats{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.chip{background:#ead9bd;border:1px solid #c2a17c;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}
+.top-btn{border:1px solid #b89570;background:#fff9ed;border-radius:999px;padding:8px 11px;font-weight:900;cursor:pointer;color:#4e3628}
+
+.office-frame{
+  margin-top:16px;position:relative;width:100%;aspect-ratio:2048/1143;
+  border:1px solid #8e684a;border-radius:22px;overflow:hidden;
+  box-shadow:0 18px 45px rgba(0,0,0,.34);background:#6a4a36
+}
+.office-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;user-select:none}
+
+.office-title{
+  position:absolute;left:2.2%;top:2.8%;z-index:4;
+  padding:10px 14px;border-radius:8px;
+  background:rgba(52,36,28,.87);color:#f4e0b7;
+  border:2px solid rgba(221,190,128,.88);
+  box-shadow:0 5px 13px rgba(0,0,0,.22)
+}
+.office-title b{display:block;font-size:clamp(14px,1.55vw,23px)} .office-title span{font-size:clamp(8px,.72vw,11px);letter-spacing:.11em;color:#d9c6a7}
+
+.hotspot{
+  position:absolute;z-index:5;border:2px solid transparent;background:transparent;border-radius:12px;cursor:pointer;
+  transition:.15s;outline:none
+}
+.hotspot:hover,.hotspot:focus-visible{
+  border-color:rgba(255,215,120,.95);
+  background:rgba(255,218,124,.11);
+  box-shadow:0 0 0 3px rgba(91,58,30,.18),0 0 25px rgba(255,209,103,.52)
+}
+.hotspot .tag{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  white-space:nowrap;background:rgba(255,247,226,.94);border:1px solid #9a744c;border-radius:999px;
+  padding:5px 8px;font-size:clamp(8px,.74vw,12px);font-weight:950;color:#523a29;
+  box-shadow:0 3px 8px rgba(0,0,0,.18);transition:.15s
+}
+.hotspot:hover .tag{transform:translate(-50%,-50%) scale(1.06)}
+.hotspot .done-stamp{
+  display:none;position:absolute;right:-3px;top:-4px;transform:rotate(10deg);
+  width:43px;height:43px;border:2px solid #94463d;color:#94463d;border-radius:50%;
+  background:rgba(255,244,223,.88);place-items:center;text-align:center;
+  font-size:9px;line-height:1;font-weight:950
+}
+.hotspot.done .done-stamp{display:grid}
+
+.folder-1{left:25.8%;top:66.6%;width:17.0%;height:10.5%}
+.folder-2{left:36.0%;top:61.8%;width:12.2%;height:8.5%}
+.folder-3{left:44.1%;top:61.1%;width:12.2%;height:8.6%}
+.folder-4{left:52.3%;top:62.0%;width:12.1%;height:8.4%}
+.folder-5{left:37.0%;top:69.0%;width:14.4%;height:8.8%}
+.folder-6{left:47.5%;top:71.4%;width:14.5%;height:9.1%}
+
+.notebook-hot{left:68.3%;top:75.0%;width:14.8%;height:13.0%}
+.phone-hot{left:68.1%;top:59.0%;width:10.5%;height:13.0%}
+.board-hot{left:48.8%;top:18.5%;width:34.0%;height:41.5%}
+
+.special .tag{background:rgba(61,48,39,.89);color:#fff3d9;border-color:#c19b64}
+.board-hot .tag{top:9%;left:14%;transform:none}
+.board-hot:hover .tag{transform:scale(1.04)}
+
+.board-progress{
+  position:absolute;z-index:4;
+  left:71.2%;top:17.0%;width:10.8%;height:28.5%;
+  background:rgba(248,232,198,.74);
+  border:1px solid rgba(126,91,53,.58);
+  border-radius:8px;
+  padding:12px 9px;
+  box-shadow:0 3px 10px rgba(0,0,0,.10);
+  transform:rotate(-0.4deg);
+  pointer-events:none;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;
+  backdrop-filter:blur(1.2px)
+}
+.board-progress b{
+  display:block;font-size:clamp(9px,.80vw,13px);line-height:1.25;margin-bottom:10px
+}
+.board-progress .count-large{
+  font-size:clamp(17px,1.45vw,25px);font-weight:950;color:#4e3b2c;line-height:1;margin-bottom:10px
+}
+.board-progress .bar{
+  width:84%;height:8px;background:rgba(176,151,118,.45);border-radius:999px;overflow:hidden;margin:2px 0 9px
+}
+.board-progress .fill{
+  height:100%;width:0;background:rgba(135,93,53,.86);border-radius:999px;transition:.3s
+}
+.board-progress span{
+  font-size:clamp(7px,.62vw,10px);color:#625447;line-height:1.35
+}
+
+.hint{
+  margin:10px auto 0;width:max-content;max-width:100%;padding:8px 12px;border-radius:999px;
+  background:rgba(255,244,224,.9);border:1px solid #b48d66;color:#5d4737;font-size:12px;font-weight:850
+}
+
+.page{display:none;margin-top:16px} .page.show{display:block}
+.paper-page{background:#f7ead5;border:1px solid #ad8c68;border-radius:20px;padding:20px;box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.page-head{display:flex;justify-content:space-between;gap:12px;align-items:center;border-bottom:2px dashed #c3a681;padding-bottom:13px}
+.page-head h2{margin:0;font-size:25px} .back{border:1px solid #b89b78;background:#fff8e9;border-radius:9px;padding:8px 11px;font-weight:900;cursor:pointer}
+
+.case-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+.case-file{
+  border:1px solid #c0a17b;background:#fff9ec;border-radius:12px;padding:14px;
+  display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;
+  cursor:pointer;text-align:left;box-shadow:0 5px 12px rgba(75,49,30,.08)
+}
+.case-file:hover{transform:translateY(-2px);border-color:#9a754e}
+.case-no{font-size:11px;font-weight:950;color:#6e4933;background:#ead6b7;border:1px solid #c2a17d;border-radius:8px;padding:7px}
+.case-title{font-weight:900;line-height:1.4}
+.case-state{font-size:11px;font-weight:950;border-radius:999px;padding:6px 8px;background:#e7dbc9;color:#76695e}
+.case-file.solved{border-color:#94a78f;background:#fbf8ec} .case-file.solved .case-state{background:#dfe9da;color:#3d5b3e}
+
+.notebook-page{background:linear-gradient(90deg,#ead0a6 0 14px,transparent 14px),#fff8e8}
+.stamp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}
+.record{border:1px dashed #c4a47b;border-radius:12px;padding:11px;min-height:110px;background:#fbf2e4;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer}
+.record.got{border-style:solid;background:#f2e7d3} .record .mark{font-size:11px;font-weight:950;color:#8e473e}
+.stamp-img-wrap{display:flex;align-items:center;justify-content:center;min-height:84px;margin:6px 0 8px}
+.stamp-img{width:80px;height:80px;object-fit:contain;opacity:.20;filter:grayscale(1);transition:.18s}
+.record.got .stamp-img{opacity:1;filter:none;transform:rotate(-2deg)}
+.record .stamp-caption{font-size:10px;font-weight:900;color:#7d6d5f;text-align:center;margin-top:4px}
+.record.got .stamp-caption{color:#8e473e}
+
+
+.modal{display:none;position:fixed;inset:0;z-index:900;background:rgba(31,23,18,.58);padding:20px;place-items:center}
+.modal.show{display:grid}
+.modal-card{width:min(760px,94vw);max-height:84vh;overflow:auto;background:#fff7e8;border:1px solid #aa8862;border-radius:18px;padding:18px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.modal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}
+.modal-head h2{margin:0} .close{border:1px solid #bea07b;background:#f2e2c8;border-radius:9px;padding:7px 10px;font-weight:900;cursor:pointer}
+.overview-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.overview-item{border:1px solid #c6a984;border-radius:12px;padding:12px;background:#fffaf0}
+.overview-item b{display:block;margin-bottom:5px} .mini-bar{height:7px;background:#e0cfb8;border-radius:999px;overflow:hidden} .mini-fill{height:100%;background:#668069;border-radius:999px}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:1200;background:#352820;color:#fff4df;padding:10px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;box-shadow:0 8px 20px rgba(0,0,0,.25);font-size:13px;font-weight:850}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.viewer{display:none;position:fixed;inset:0;background:#201915;z-index:1000} .viewer.show{display:block}
+.viewerbar{height:58px;background:#f4e6ce;border-bottom:1px solid #b4926a;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:10px}
+.viewer-left{display:flex;align-items:center;gap:10px;min-width:0} .viewer-title{font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vbtn{border:1px solid #bea07d;background:#fff9ed;border-radius:9px;padding:8px 10px;font-weight:900;cursor:pointer;white-space:nowrap}
+.viewer iframe{width:100%;height:calc(100vh - 58px);border:0;background:#fff}
+.footer{text-align:center;color:#d7c4ae;font-size:12px;margin-top:16px}
+
+@media(max-width:900px){
+  .case-grid{grid-template-columns:1fr} .stamp-grid{grid-template-columns:repeat(3,1fr)}
+  .board-progress{left:70%;top:16.5%;width:12.5%;height:29.5%}
+}
+@media(max-width:650px){
+  .app{padding-left:8px;padding-right:8px} .topbar{align-items:flex-start}
+  .stats .hide-sm{display:none} .office-title{padding:6px 8px}
+  .hotspot .tag{padding:3px 5px;font-size:7px}
+  .board-progress{padding:4px 4px} .board-progress .bar{height:4px} .board-progress b{margin-bottom:4px} .board-progress .count-large{margin-bottom:4px}
+  .stamp-grid{grid-template-columns:repeat(2,1fr)}
+  .case-file{grid-template-columns:auto 1fr} .case-state{grid-column:2}
+}
+
+/* v4.0 transparent stamp polish */
+.stamp-img-wrap{min-height:104px!important;margin:5px 0 8px!important}
+.stamp-img{
+  width:98px!important;height:98px!important;object-fit:contain!important;
+  background:transparent!important;border:0!important;
+  opacity:.17!important;filter:grayscale(1)!important;
+}
+.record.got .stamp-img{
+  opacity:1!important;filter:none!important;
+  transform:rotate(-2deg) scale(1.02)!important;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="seal">史</div>
+      <div><div class="brand-title">역사 탐정사무소</div><div class="small">통합 사건 수사본부 · 44개 사건</div></div>
+    </div>
+    <div class="stats">
+      <div class="chip">해결 <span id="solvedTop">0</span>/44</div>
+      <div class="chip hide-sm">진행률 <span id="percentTop">0</span>%</div>
+      <button class="top-btn" onclick="showNotebook()">📖 탐정 수첩</button>
+    </div>
+  </header>
+
+  <main id="home">
+    <section class="office-frame">
+      <img class="office-bg" src="assets/office-bg.png" alt="역사 탐정사무소 내부">
+
+      <div class="office-title">
+        <b>역사 탐정사무소</b>
+        <span>HISTORY DETECTIVE OFFICE</span>
+      </div>
+
+      <div class="board-progress">
+        <b>전체 수사 현황</b>
+        <div class="count-large" id="boardCount">0 / 44</div>
+        <div class="bar"><div class="fill" id="boardFill"></div></div>
+        <span id="boardText">사건 해결 · 0%</span>
+      </div>
+
+      <button class="hotspot folder-1" id="unitHot1" onclick="openUnit(1)" aria-label="1단원">
+        <span class="tag">Ⅰ단원 <span id="u1count"></span></span><span class="done-stamp">수사<br>완료</span>
+      </button>
+      <button class="hotspot folder-2" id="unitHot2" onclick="openUnit(2)" aria-label="2단원">
+        <span class="tag">Ⅱ단원 <span id="u2count"></span></span><span class="done-stamp">수사<br>완료</span>
+      </button>
+      <button class="hotspot folder-3" id="unitHot3" onclick="openUnit(3)" aria-label="3단원">
+        <span class="tag">Ⅲ단원 <span id="u3count"></span></span><span class="done-stamp">수사<br>완료</span>
+      </button>
+      <button class="hotspot folder-4" id="unitHot4" onclick="openUnit(4)" aria-label="4단원">
+        <span class="tag">Ⅳ단원 <span id="u4count"></span></span><span class="done-stamp">수사<br>완료</span>
+      </button>
+      <button class="hotspot folder-5" id="unitHot5" onclick="openUnit(5)" aria-label="5단원">
+        <span class="tag">Ⅴ단원 <span id="u5count"></span></span><span class="done-stamp">수사<br>완료</span>
+      </button>
+      <button class="hotspot folder-6" id="unitHot6" onclick="openUnit(6)" aria-label="6단원">
+        <span class="tag">Ⅵ단원 <span id="u6count"></span></span><span class="done-stamp">수사<br>완료</span>
+      </button>
+
+      <button class="hotspot special notebook-hot" onclick="showNotebook()" aria-label="탐정 수첩">
+        <span class="tag">📖 탐정 수첩</span>
+      </button>
+
+      <button class="hotspot special phone-hot" onclick="continueLast()" aria-label="최근 사건 이어하기">
+        <span class="tag">☎ 최근 사건</span>
+      </button>
+
+      <button class="hotspot special board-hot" onclick="showOverview()" aria-label="전체 수사 현황">
+        <span class="tag">📌 수사 현황</span>
+      </button>
+    </section>
+
+    <div class="hint">책상 위 사건 서류철을 클릭해 단원을 선택하세요. 전화기는 최근 사건 이어하기, 갈색 수첩은 탐정 수첩입니다.</div>
+  </main>
+
+  <section class="page" id="unitPage">
+    <div class="paper-page">
+      <div class="page-head">
+        <div><div class="small" id="unitNo"></div><h2 id="unitTitle"></h2></div>
+        <button class="back" onclick="showHome()">← 탐정사무소</button>
+      </div>
+      <div class="case-grid" id="caseGrid"></div>
+    </div>
+  </section>
+
+  <section class="page" id="notebookPage">
+    <div class="paper-page notebook-page">
+      <div class="page-head">
+        <div><div class="small">DETECTIVE NOTEBOOK</div><h2>탐정 수첩 · 사건 해결 기록</h2></div>
+        <button class="back" onclick="showHome()">← 탐정사무소</button>
+      </div>
+      <div class="stamp-grid" id="stampGrid"></div>
+    </div>
+  </section>
+
+  <div class="footer">역사 탐정소 v4.0 · 실제 스탬프 완전 적용판 · 총 44개 사건</div>
+</div>
+
+<div class="modal" id="overviewModal" onclick="if(event.target===this)hideOverview()">
+  <div class="modal-card">
+    <div class="modal-head"><h2>📌 전체 수사 현황</h2><button class="close" onclick="hideOverview()">닫기</button></div>
+    <div class="overview-grid" id="overviewGrid"></div>
+  </div>
+</div>
+
+<div class="viewer" id="viewer">
+  <div class="viewerbar">
+    <div class="viewer-left">
+      <button class="vbtn" onclick="closeCase()">← 탐정사무소</button>
+      <div class="viewer-title" id="viewerTitle"></div>
+    </div>
+    <button class="vbtn" onclick="refreshCase()">↻ 사건 다시 열기</button>
+  </div>
+  <iframe id="caseFrame" title="역사 탐정 사건"></iframe>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const UNITS = {"1": {"roman": "Ⅰ", "name": "선사 문화와 고대 국가의 형성", "desc": "선사 시대부터 삼국의 성장과 문화까지", "icon": "🏺"}, "2": {"roman": "Ⅱ", "name": "남북국 시대의 전개", "desc": "신라의 통일과 발해, 남북국의 발전", "icon": "⚔️"}, "3": {"roman": "Ⅲ", "name": "고려의 성립과 변천", "desc": "고려 건국부터 원 간섭기와 고려 문화까지", "icon": "🐉"}, "4": {"roman": "Ⅳ", "name": "조선의 성립과 발전", "desc": "조선 건국부터 붕당 정치와 양란까지", "icon": "🏯"}, "5": {"roman": "Ⅴ", "name": "조선 사회의 변동", "desc": "탕평 정치, 경제·신분 변화, 실학과 농민 봉기", "icon": "📜"}, "6": {"roman": "Ⅵ", "name": "근현대 사회의 전개", "desc": "개항부터 독립운동, 분단과 현대 사회까지", "icon": "🕯️"}};
+const CASES = [{"code": "1-01", "unit": 1, "title": "강가에서 발견된 수상한 움집", "solveKey": "history_case_1_01_solved", "stampKey": "history_stamp_1_01_neolithic"}, {"code": "1-02", "unit": 1, "title": "무덤 하나가 마을보다 거대하다", "solveKey": "history_case_1_02_solved", "stampKey": "history_stamp_1_02_dolmen"}, {"code": "1-03", "unit": 1, "title": "단 세 개의 법으로 사회를 밝혀라", "solveKey": "history_case_1_03_solved", "stampKey": "history_stamp_1_03_bronze_dagger"}, {"code": "1-04", "unit": 1, "title": "나라별 풍습이 너무 다르다", "solveKey": "history_case_1_04_solved", "stampKey": "history_stamp_1_04_sodo"}, {"code": "1-05", "unit": 1, "title": "고구려의 이름이 왜 신라 무덤에서 발견됐을까", "solveKey": "history_case_1_05_solved", "stampKey": "history_stamp_1_05_hou"}, {"code": "1-06", "unit": 1, "title": "동맹국의 왕이 왜 전장에서 죽었을까", "solveKey": "history_case_1_06_solved", "stampKey": "history_stamp_1_06_jinheung"}, {"code": "1-07", "unit": 1, "title": "삼국의 문화재에는 왜 서로 다른 흔적이 남아 있을까", "solveKey": "history_case_1_07_solved", "stampKey": "history_stamp_1_07_incense_burner"}, {"code": "2-01", "unit": 2, "title": "신라는 왜 먼 당나라와 손을 잡았을까", "solveKey": "history_case_2_01_solved", "stampKey": "history_stamp_2_01_mu-yeol"}, {"code": "2-02", "unit": 2, "title": "어제의 동맹이 오늘의 적이 되었다", "solveKey": "history_case_2_02_solved", "stampKey": "history_stamp_2_02_munmu"}, {"code": "2-03", "unit": 2, "title": "고구려는 멸망했는데 왜 다시 나타났을까", "solveKey": "history_case_2_03_solved", "stampKey": "history_stamp_2_03_balhae_tile"}, {"code": "2-04", "unit": 2, "title": "왕은 왜 수도 밖에 작은 수도를 다섯 곳이나 만들었을까", "solveKey": "history_case_2_04_solved", "stampKey": "history_stamp_2_04_five_secondary_capitals"}, {"code": "2-05", "unit": 2, "title": "관리는 왜 마을 사람과 소까지 기록했을까", "solveKey": "history_case_2_05_solved", "stampKey": "history_stamp_2_05_village_document"}, {"code": "2-06", "unit": 2, "title": "발해는 왜 고구려를 계승한 나라로 볼 수 있을까", "solveKey": "history_case_2_06_solved", "stampKey": "history_stamp_2_06_sanggyeong"}, {"code": "2-07", "unit": 2, "title": "청해진에는 왜 여러 나라의 배가 모였을까", "solveKey": "history_case_2_07_solved", "stampKey": "history_stamp_2_07_cheonghaejin"}, {"code": "3-01", "unit": 3, "title": "후삼국의 세 왕 중 왕건이 승리한 이유는?", "solveKey": "history_case_3_01_solved", "stampKey": "history_stamp_3_01_taejo_wanggeon"}, {"code": "3-02", "unit": 3, "title": "왕은 왜 노비를 다시 양인으로 만들었을까", "solveKey": "history_case_3_02_solved", "stampKey": "history_stamp_3_02_gwageo"}, {"code": "3-03", "unit": 3, "title": "지방에 관리와 학교를 함께 보낸 이유는?", "solveKey": "history_case_3_03_solved", "stampKey": "history_stamp_3_03_hyanggyo"}, {"code": "3-04", "unit": 3, "title": "시험을 보지 않고도 관리가 될 수 있었다?", "solveKey": "history_case_3_04_solved", "stampKey": "history_stamp_3_04_eumseo"}, {"code": "3-05", "unit": 3, "title": "무신들은 왜 칼을 들었을까?", "solveKey": "history_case_3_05_solved", "stampKey": "history_stamp_3_05_military_coup"}, {"code": "3-06", "unit": 3, "title": "고려 왕은 왜 섬으로 수도를 옮겼을까?", "solveKey": "history_case_3_06_solved", "stampKey": "history_stamp_3_06_ganghwa"}, {"code": "3-07", "unit": 3, "title": "왕의 이름 앞에 왜 몽골식 이름이 붙었을까?", "solveKey": "history_case_3_07_solved", "stampKey": "history_stamp_3_07_gongmin"}, {"code": "3-08", "unit": 3, "title": "팔만 장의 나무판과 푸른 그릇은 무엇을 말할까?", "solveKey": "history_case_3_08_solved", "stampKey": "history_stamp_3_08_celadon"}, {"code": "4-01", "unit": 4, "title": "새 왕조는 왜 한양으로 수도를 옮겼을까?", "solveKey": "history_case_4_01_solved", "stampKey": "history_stamp_4_01_gyeongbokgung"}, {"code": "4-02", "unit": 4, "title": "왕 혼자 나라를 다스릴 수 있었을까?", "solveKey": "history_case_4_02_solved", "stampKey": "history_stamp_4_02_uijeongbu"}, {"code": "4-03", "unit": 4, "title": "조선은 명과 여진, 일본을 어떻게 다르게 대했을까?", "solveKey": "history_case_4_03_solved", "stampKey": "history_stamp_4_03_sadae_gyorin"}, {"code": "4-04", "unit": 4, "title": "지방 선비들은 왜 서원과 향약을 만들었을까?", "solveKey": "history_case_4_04_solved", "stampKey": "history_stamp_4_04_seowon"}, {"code": "4-05", "unit": 4, "title": "같은 유학자들이 왜 서로 갈라졌을까?", "solveKey": "history_case_4_05_solved", "stampKey": "history_stamp_4_05_bungdang"}, {"code": "4-06", "unit": 4, "title": "조선은 어떻게 7년 전쟁을 견뎌냈을까?", "solveKey": "history_case_4_06_solved", "stampKey": "history_stamp_4_06_geobukseon"}, {"code": "4-07", "unit": 4, "title": "청과 싸울 것인가, 화친할 것인가", "solveKey": "history_case_4_07_solved", "stampKey": "history_stamp_4_07_namhansanseong"}, {"code": "5-01", "unit": 5, "title": "왕은 왜 붕당 사이에서 줄타기를 했을까?", "solveKey": "history_case_5_01_solved", "stampKey": "history_stamp_5_01_gyujanggak"}, {"code": "5-02", "unit": 5, "title": "백성을 돕던 곡식이 왜 세금처럼 변했을까?", "solveKey": "history_case_5_02_solved", "stampKey": "history_stamp_5_02_hwangok"}, {"code": "5-03", "unit": 5, "title": "조선의 장터에는 왜 돈과 상인이 늘어났을까?", "solveKey": "history_case_5_03_solved", "stampKey": "history_stamp_5_03_sangpyeong"}, {"code": "5-04", "unit": 5, "title": "신분제 사회에서 양반이 갑자기 늘어난 이유는?", "solveKey": "history_case_5_04_solved", "stampKey": "history_stamp_5_04_gongmyeongcheop"}, {"code": "5-05", "unit": 5, "title": "학자들은 왜 책상 대신 농촌과 시장을 바라봤을까?", "solveKey": "history_case_5_05_solved", "stampKey": "history_stamp_5_05_mongminsimseo"}, {"code": "5-06", "unit": 5, "title": "백성의 이야기가 그림과 소설의 주인공이 된 이유는?", "solveKey": "history_case_5_06_solved", "stampKey": "history_stamp_5_06_genre_painting"}, {"code": "5-07", "unit": 5, "title": "농민들은 왜 관아를 점령했을까?", "solveKey": "history_case_5_07_solved", "stampKey": "history_stamp_5_07_peasant_uprising"}, {"code": "6-01", "unit": 6, "title": "닫혀 있던 조선의 항구는 왜 열렸을까?", "solveKey": "history_case_6_01_solved", "stampKey": "history_stamp_6_01_ganghwa_treaty"}, {"code": "6-02", "unit": 6, "title": "조선을 바꾸는 방법을 두고 왜 갈라졌을까?", "solveKey": "history_case_6_02_solved", "stampKey": "history_stamp_6_02_gapsin_reform"}, {"code": "6-03", "unit": 6, "title": "농민군은 왜 전주성까지 진격했을까?", "solveKey": "history_case_6_03_solved", "stampKey": "history_stamp_6_03_sabaltongmun"}, {"code": "6-04", "unit": 6, "title": "조선은 어떻게 황제의 나라가 되었을까?", "solveKey": "history_case_6_04_solved", "stampKey": "history_stamp_6_04_korean_empire"}, {"code": "6-05", "unit": 6, "title": "거리의 만세 운동은 어떻게 전국으로 퍼졌을까?", "solveKey": "history_case_6_05_solved", "stampKey": "history_stamp_6_05_declaration"}, {"code": "6-06", "unit": 6, "title": "나라 밖에서도 독립운동은 어떻게 이어졌을까?", "solveKey": "history_case_6_06_solved", "stampKey": "history_stamp_6_06_kla"}, {"code": "6-07", "unit": 6, "title": "해방의 기쁨은 왜 곧 분단과 전쟁으로 이어졌을까?", "solveKey": "history_case_6_07_solved", "stampKey": "history_stamp_6_07_38th_parallel"}, {"code": "6-08", "unit": 6, "title": "대한민국 사회는 어떻게 지금의 모습이 되었을까?", "solveKey": "history_case_6_08_solved", "stampKey": "history_stamp_6_08_democratic_citizen"}];
+const CASE_HTML = window.__HD_CASE_B64 = window.__HD_CASE_B64 || {};
+const CASE_DATA_FILES = {"1-01": "case_data/1-01.js", "1-02": "case_data/1-02.js", "1-03": "case_data/1-03.js", "1-04": "case_data/1-04.js", "1-05": "case_data/1-05.js", "1-06": "case_data/1-06.js", "1-07": "case_data/1-07.js", "2-01": "case_data/2-01.js", "2-02": "case_data/2-02.js", "2-03": "case_data/2-03.js", "2-04": "case_data/2-04.js", "2-05": "case_data/2-05.js", "2-06": "case_data/2-06.js", "2-07": "case_data/2-07.js", "3-01": "case_data/3-01.js", "3-02": "case_data/3-02.js", "3-03": "case_data/3-03.js", "3-04": "case_data/3-04.js", "3-05": "case_data/3-05.js", "3-06": "case_data/3-06.js", "3-07": "case_data/3-07.js", "3-08": "case_data/3-08.js", "4-01": "case_data/4-01.js", "4-02": "case_data/4-02.js", "4-03": "case_data/4-03.js", "4-04": "case_data/4-04.js", "4-05": "case_data/4-05.js", "4-06": "case_data/4-06.js", "4-07": "case_data/4-07.js", "5-01": "case_data/5-01.js", "5-02": "case_data/5-02.js", "5-03": "case_data/5-03.js", "5-04": "case_data/5-04.js", "5-05": "case_data/5-05.js", "5-06": "case_data/5-06.js", "5-07": "case_data/5-07.js", "6-01": "case_data/6-01.js", "6-02": "case_data/6-02.js", "6-03": "case_data/6-03.js", "6-04": "case_data/6-04.js", "6-05": "case_data/6-05.js", "6-06": "case_data/6-06.js", "6-07": "case_data/6-07.js", "6-08": "case_data/6-08.js"};
+const CASE_LOAD_STATE = {};
+const ANSWER_TARGETS = {"1-01": {"checkQ1": 1, "checkQ2": 2, "checkFinal": 3}, "1-02": {"checkQ1": 2, "checkQ2": 3, "checkFinal": 1}, "1-03": {"checkQ1": 3, "checkQ2": 1, "checkFinal": 2}, "1-04": {"checkQ2": 1, "checkFinal": 3}, "1-05": {"checkQ1": 2, "checkQ2": 2, "checkFinal": 1}, "1-06": {"checkQ1": 3, "checkQ2": 3, "checkFinal": 2}, "1-07": {"checkQ1": 1, "checkQ2": 1, "checkFinal": 2}, "2-01": {"checkQ1": 3, "checkQ2": 2, "checkFinal": 3}, "2-02": {"checkQ1": 1, "checkQ2": 3, "checkFinal": 1}, "2-03": {"checkQ1": 2, "checkQ2": 1, "checkFinal": 3}, "2-04": {"checkQ1": 2, "checkQ2": 2, "checkFinal": 1}, "2-05": {"checkQ1": 3, "checkQ2": 3, "checkFinal": 2}, "2-06": {"checkQ1": 1, "checkQ2": 1, "checkFinal": 2}, "2-07": {"checkQ1": 3, "checkQ2": 2, "checkFinal": 3}, "3-01": {"checkQ1": 1, "checkQ2": 3, "checkFinal": 1}, "3-02": {"checkQ1": 2, "checkQ2": 1, "checkFinal": 3}, "3-03": {"checkQ1": 2, "checkQ2": 2, "checkFinal": 1}, "3-04": {"checkQ1": 3, "checkQ2": 3, "checkFinal": 2}, "3-05": {"checkQ1": 1, "checkQ2": 1, "checkFinal": 2}, "3-06": {"checkQ1": 3, "checkQ2": 2, "checkFinal": 3}, "3-07": {"checkQ1": 1, "checkQ2": 3, "checkFinal": 1}, "3-08": {"checkQ1": 2, "checkQ2": 1, "checkFinal": 3}, "4-01": {"checkQ1": 2, "checkQ2": 2, "checkFinal": 1}, "4-02": {"checkQ1": 3, "checkQ2": 3, "checkFinal": 2}, "4-03": {"checkQ1": 1, "checkQ2": 1, "checkFinal": 2}, "4-04": {"checkQ1": 3, "checkQ2": 2, "checkFinal": 3}, "4-05": {"checkQ1": 1, "checkQ2": 3, "checkFinal": 1}, "4-06": {"checkQ1": 2, "checkQ2": 1, "checkFinal": 3}, "4-07": {"checkQ1": 2, "checkQ2": 2, "checkFinal": 1}, "5-01": {"checkQ1": 3, "checkQ2": 3, "checkFinal": 2}, "5-02": {"checkQ1": 1, "checkQ2": 1, "checkFinal": 2}, "5-03": {"checkQ1": 3, "checkQ2": 2, "checkFinal": 3}, "5-04": {"checkQ1": 1, "checkQ2": 3, "checkFinal": 1}, "5-05": {"checkQ1": 2, "checkQ2": 1, "checkFinal": 3}, "5-06": {"checkQ1": 2, "checkQ2": 2, "checkFinal": 1}, "5-07": {"checkQ1": 3, "checkQ2": 3, "checkFinal": 2}, "6-01": {"checkQ1": 1, "checkQ2": 1, "checkFinal": 2}, "6-02": {"checkQ1": 3, "checkQ2": 2, "checkFinal": 3}, "6-03": {"checkQ1": 1, "checkQ2": 3, "checkFinal": 1}, "6-04": {"checkQ1": 2, "checkQ2": 1, "checkFinal": 3}, "6-05": {"checkQ1": 2, "checkQ2": 2, "checkFinal": 1}, "6-06": {"checkQ1": 3, "checkQ2": 3, "checkFinal": 2}, "6-07": {"checkQ1": 1, "checkQ2": 1, "checkFinal": 2}, "6-08": {"checkQ1": 3, "checkQ2": 1, "checkFinal": 2}};
+const STAMP_IMAGES = {"1-01": "stamps/1-01.png", "1-02": "stamps/1-02.png", "1-03": "stamps/1-03.png", "1-04": "stamps/1-04.png", "1-05": "stamps/1-05.png", "1-06": "stamps/1-06.png", "1-07": "stamps/1-07.png", "2-01": "stamps/2-01.png", "2-02": "stamps/2-02.png", "2-03": "stamps/2-03.png", "2-04": "stamps/2-04.png", "2-05": "stamps/2-05.png", "2-06": "stamps/2-06.png", "2-07": "stamps/2-07.png", "3-01": "stamps/3-01.png", "3-02": "stamps/3-02.png", "3-03": "stamps/3-03.png", "3-04": "stamps/3-04.png", "3-05": "stamps/3-05.png", "3-06": "stamps/3-06.png", "3-07": "stamps/3-07.png", "3-08": "stamps/3-08.png", "4-01": "stamps/4-01.png", "4-02": "stamps/4-02.png", "4-03": "stamps/4-03.png", "4-04": "stamps/4-04.png", "4-05": "stamps/4-05.png", "4-06": "stamps/4-06.png", "4-07": "stamps/4-07.png", "5-01": "stamps/5-01.png", "5-02": "stamps/5-02.png", "5-03": "stamps/5-03.png", "5-04": "stamps/5-04.png", "5-05": "stamps/5-05.png", "5-06": "stamps/5-06.png", "5-07": "stamps/5-07.png", "6-01": "stamps/6-01.png", "6-02": "stamps/6-02.png", "6-03": "stamps/6-03.png", "6-04": "stamps/6-04.png", "6-05": "stamps/6-05.png", "6-06": "stamps/6-06.png", "6-07": "stamps/6-07.png", "6-08": "stamps/6-08.png"};
+
+// ===== lightweight package: external case files loaded on demand =====
+(function(){
+  const stampKeys = Object.keys(STAMP_IMAGES);
+  const codes = CASES.map(c=>c.code);
+  window.__HISTORY_DETECTIVE_V43__ = {
+    caseCount: codes.length,
+    stampCount: stampKeys.length,
+    missingStamps: codes.filter(k=>!STAMP_IMAGES[k]),
+    extraStamps: stampKeys.filter(k=>!codes.includes(k))
+  };
+  console.info("[역사 탐정사무소 v4.3 light]", window.__HISTORY_DETECTIVE_V43__);
+})();
+
+let activeCaseCode=null;
+let currentUnit=null;
+
+function solved(c){
+  try{return localStorage.getItem(c.solveKey)==="true"}catch(e){return false}
+}
+function stamped(c){
+  if(!c.stampKey) return solved(c);
+  try{return localStorage.getItem(c.stampKey)==="true"}catch(e){return solved(c)}
+}
+function countSolved(list=CASES){return list.filter(solved).length}
+
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+function updateProgress(){
+  const n=countSolved(), pct=Math.round(n/CASES.length*1000)/10;
+  document.getElementById("solvedTop").textContent=n;
+  document.getElementById("percentTop").textContent=pct;
+  document.getElementById("boardCount").textContent=`${n} / 44`;
+  document.getElementById("boardText").textContent=`사건 해결 · ${pct}%`;
+  document.getElementById("boardFill").style.width=pct+"%";
+
+  for(let u=1;u<=6;u++){
+    const list=CASES.filter(c=>c.unit===u), done=countSolved(list);
+    document.getElementById(`u${u}count`).textContent=`${done}/${list.length}`;
+    const h=document.getElementById(`unitHot${u}`);
+    h.classList.toggle("done",done===list.length);
+  }
+}
+
+function showHome(){
+  document.getElementById("home").style.display="";
+  document.getElementById("unitPage").classList.remove("show");
+  document.getElementById("notebookPage").classList.remove("show");
+  updateProgress();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function openUnit(u){
+  currentUnit=u;
+  document.getElementById("home").style.display="none";
+  document.getElementById("notebookPage").classList.remove("show");
+  document.getElementById("unitPage").classList.add("show");
+
+  const meta=UNITS[u], list=CASES.filter(c=>c.unit===u);
+  document.getElementById("unitNo").textContent=`${meta.roman}단원 · ${countSolved(list)}/${list.length} 해결`;
+  document.getElementById("unitTitle").textContent=meta.name;
+
+  const grid=document.getElementById("caseGrid"); grid.innerHTML="";
+  list.forEach(c=>{
+    const b=document.createElement("button");
+    b.className="case-file"+(solved(c)?" solved":"");
+    b.onclick=()=>openCase(c.code);
+    b.innerHTML=`<div class="case-no">CASE ${c.code}</div>
+      <div class="case-title">${c.title}</div>
+      <div class="case-state">${solved(c)?"✓ 해결 완료":"미해결 사건"}</div>`;
+    grid.appendChild(b);
+  });
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showNotebook(){
+  document.getElementById("home").style.display="none";
+  document.getElementById("unitPage").classList.remove("show");
+  document.getElementById("notebookPage").classList.add("show");
+
+  const grid=document.getElementById("stampGrid");grid.innerHTML="";
+  CASES.forEach(c=>{
+    const got=stamped(c),div=document.createElement("div");
+    div.className="record"+(got?" got":"");
+    div.onclick=()=>openCase(c.code);
+    div.innerHTML=`<div class="mark">${got?"◉ 스탬프 획득":"○ 미해결"}</div>
+      <div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||""}" alt="CASE ${c.code} 스탬프"></div>
+      <div><div class="small">CASE ${c.code}</div>
+      <div style="font-weight:900;line-height:1.35">${c.title}</div>
+      <div class="stamp-caption">${got?"수사 완료 스탬프":"사건 해결 후 획득"}</div></div>`;
+    grid.appendChild(div);
+  });
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function showOverview(){
+  const grid=document.getElementById("overviewGrid");grid.innerHTML="";
+  for(let u=1;u<=6;u++){
+    const meta=UNITS[u],list=CASES.filter(c=>c.unit===u),done=countSolved(list),pct=Math.round(done/list.length*100);
+    const div=document.createElement("div");
+    div.className="overview-item";
+    div.innerHTML=`<b>${meta.roman}단원 · ${meta.name}</b>
+      <div class="small" style="margin-bottom:6px">${done} / ${list.length} 사건 해결</div>
+      <div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>`;
+    div.onclick=()=>{hideOverview();openUnit(u)};
+    div.style.cursor="pointer";
+    grid.appendChild(div);
+  }
+  document.getElementById("overviewModal").classList.add("show");
+}
+function hideOverview(){document.getElementById("overviewModal").classList.remove("show")}
+
+function decodeBase64Utf8(b64){
+  const bin=atob(b64),bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
+const PACING_GUARD_JS = "\n(function(){\n  let pacingPendingClue = null;\n  let pacingPendingBtn = null;\n  let pacingTimer = null;\n  let pacingSeconds = 0;\n\n  const originalCloseModal = (typeof window.closeModal === 'function') ? window.closeModal : null;\n\n  function getEl(id){ return document.getElementById(id); }\n  function clearPacingTimer(){\n    if(pacingTimer){ clearInterval(pacingTimer); pacingTimer = null; }\n  }\n  function clueActionButton(){\n    const modal = getEl('clueModal');\n    if(!modal) return null;\n    const buttons = modal.querySelectorAll('.modal-card .btn');\n    return buttons.length ? buttons[buttons.length - 1] : null;\n  }\n  function setAction(text, disabled, handler){\n    const b = clueActionButton();\n    if(!b) return;\n    b.textContent = text;\n    b.disabled = !!disabled;\n    b.removeAttribute('onclick');\n    b.onclick = handler || null;\n  }\n  function genericCompleteMessage(){\n    return '단서 수집 완료. 이제 자료를 해석해 보세요.';\n  }\n  function markClueConfirmed(){\n    const n = pacingPendingClue;\n    const btn = pacingPendingBtn;\n    if(n == null || !btn) return;\n    const d = clueData[n];\n    if(!found.has(n)){\n      found.add(n);\n      btn.classList.add('found');\n      const count = getEl('clueCountHud');\n      if(count) count.textContent = found.size;\n      const log = getEl('log' + n);\n      if(log){\n        log.classList.remove('lock');\n        log.innerHTML = '<b>' + d.title + '</b><br><span class=\"small\">' + d.points[0] + '</span>';\n      }\n      const fb = getEl('sceneFb');\n      if(fb) fb.textContent = d.title + ' 단서를 확인했습니다.';\n      if(found.size >= 4){\n        if(fb) fb.textContent = genericCompleteMessage();\n        function enableInterpretationButton(){\n          let q = getEl('toQuiz');\n          if(!q){ q = document.querySelector('button[onclick*=\"goStage(3)\"]:not(.secondary)'); }\n          if(q){\n            q.disabled = false;\n            q.removeAttribute('disabled');\n            q.removeAttribute('aria-disabled');\n            q.style.pointerEvents = 'auto';\n            q.style.opacity = '1';\n            q.style.cursor = 'pointer';\n          }\n        }\n        enableInterpretationButton();\n        setTimeout(enableInterpretationButton, 0);\n        setTimeout(enableInterpretationButton, 120);\n      }\n    }\n    window.closeModal();\n  }\n\n  window.closeModal = function(){\n    clearPacingTimer();\n    pacingPendingClue = null;\n    pacingPendingBtn = null;\n    if(originalCloseModal) return originalCloseModal();\n    const modal = getEl('clueModal');\n    if(modal){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }\n  };\n\n  window.showClue = function(n, btn){\n    const d = clueData[n];\n    if(!d) return;\n    const modal = getEl('clueModal');\n    const icon = getEl('modalIcon'), code = getEl('modalCode'), title = getEl('modalTitle');\n    const desc = getEl('modalDesc'), points = getEl('modalPoints');\n    if(icon) icon.textContent = d.icon || '';\n    if(code) code.textContent = d.code || '';\n    if(title) title.textContent = d.title || '';\n    if(desc) desc.textContent = d.desc || '';\n    if(points) points.innerHTML = (d.points || []).map(function(p){ return '<li>' + p + '</li>'; }).join('');\n    if(modal){ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); }\n\n    clearPacingTimer();\n    pacingPendingClue = n;\n    pacingPendingBtn = btn;\n\n    if(found.has(n)){\n      setAction('이미 확인한 단서 · 닫기', false, window.closeModal);\n      return;\n    }\n\n    pacingSeconds = 4;\n    setAction('단서 읽는 중 · 4초', true, null);\n    pacingTimer = setInterval(function(){\n      pacingSeconds -= 1;\n      if(pacingSeconds > 0){\n        setAction('단서 읽는 중 · ' + pacingSeconds + '초', true, null);\n      } else {\n        clearPacingTimer();\n        setAction('✓ 단서 확인 완료', false, markClueConfirmed);\n      }\n    }, 1000);\n  };\n\n  function lockQuestion(box, ms, permanent){\n    if(!box) return;\n    const options = Array.prototype.slice.call(box.querySelectorAll('.option'));\n    options.forEach(function(o){\n      o.style.pointerEvents = 'none';\n      if(!permanent) o.style.opacity = '.68';\n    });\n    if(permanent){ box.dataset.pacingSolved = '1'; return; }\n    box.dataset.pacingBusy = '1';\n    setTimeout(function(){\n      if(box.dataset.pacingSolved === '1') return;\n      delete box.dataset.pacingBusy;\n      options.forEach(function(o){ o.style.pointerEvents = ''; o.style.opacity = ''; });\n    }, ms);\n  }\n\n  function wrapAnswerFunction(name){\n    const original = window[name];\n    if(typeof original !== 'function') return;\n    window[name] = function(el, n){\n      const box = el && el.parentElement;\n      if(box && (box.dataset.pacingBusy === '1' || box.dataset.pacingSolved === '1')) return;\n      original(el, n);\n      if(!el) return;\n      if(el.classList.contains('correct')){\n        lockQuestion(box, 0, true);\n      } else if(el.classList.contains('wrong')){\n        const feedback = box ? box.querySelector('.feedback') : null;\n        if(feedback && feedback.textContent.indexOf('2초 뒤') === -1){\n          feedback.textContent += ' · 피드백을 읽고 2초 뒤 다시 선택하세요.';\n        }\n        lockQuestion(box, 2000, false);\n      }\n    };\n  }\n\n  ['checkQ1','checkQ2','checkFinal'].forEach(wrapAnswerFunction);\n\n  if(typeof window.checkMatch === 'function'){\n    const originalCheckMatch = window.checkMatch;\n    let matchBusy = false;\n    window.checkMatch = function(){\n      if(matchBusy) return;\n      originalCheckMatch();\n      if(typeof matchOK !== 'undefined' && !matchOK){\n        const b = document.querySelector('button[onclick=\"checkMatch()\"]');\n        matchBusy = true;\n        if(b){ b.disabled = true; b.textContent = '단서 다시 확인 중…'; }\n        setTimeout(function(){\n          matchBusy = false;\n          if(b){ b.disabled = false; b.textContent = '연결 확인'; }\n        }, 2000);\n      }\n    };\n  }\n})();\n";
+function patchCaseForPacing(caseHtml){
+  if(caseHtml.includes('data-pacing-guard="v4.2"')) return caseHtml;
+  const style = '<style data-pacing-guard="v4.2">#clueModal .btn:disabled{opacity:.52;cursor:wait} .option{transition:opacity .15s ease}</style>';
+  const scriptOpen = '<script data-pacing-guard="v4.2">';
+  const scriptClose = '</scr' + 'ipt>';
+  const guard = style + scriptOpen + PACING_GUARD_JS + scriptClose;
+  return caseHtml.includes('</body>') ? caseHtml.replace('</body>', guard + '</body>') : caseHtml + guard;
+}
+
+function cleanOptionText(s){ return s.replace(/^[①②③]\s*/,'').replace(/\s+/g,' ').trim(); }
+function rebalanceCaseHtml(code, html){
+  const target = ANSWER_TARGETS[code] || {};
+  const circ = {1:'①',2:'②',3:'③'};
+  const fns = ['checkQ1','checkQ2','checkFinal'];
+  function currentCorrect(src,fn){
+    const re = new RegExp(String.raw`function\s+${fn}\(el,\s*n\)\{[\s\S]*?if\(n===([123])\)`);
+    const m = src.match(re); return m ? Number(m[1]) : null;
+  }
+  function replaceCorrect(src,fn,n){
+    const re = new RegExp(String.raw`(function\s+${fn}\(el,\s*n\)\{[\s\S]*?if\(n===)([123])(\))`);
+    return src.replace(re,'$1'+n+'$3');
+  }
+  for(const fn of fns){
+    const desired = target[fn];
+    if(!desired) continue;
+    const cur = currentCorrect(html, fn);
+    if(cur==null || cur===desired) continue;
+    const blockRe = new RegExp(String.raw`((?:\s*<div class="option" onclick="${fn}\(this,\s*[123]\)">[\s\S]*?<\/div>\s*){3})`);
+    const block = html.match(blockRe);
+    if(!block) continue;
+    const itemRe = new RegExp(String.raw`<div class="option" onclick="${fn}\(this,\s*([123])\)">([\s\S]*?)<\/div>`,'g');
+    const items = {}; let m;
+    while((m=itemRe.exec(block[1]))!==null) items[Number(m[1])] = m[2];
+    if(!items[1]||!items[2]||!items[3]) continue;
+    const correct = items[cur];
+    const wrongs = [1,2,3].filter(n=>n!==cur).map(n=>items[n]);
+    const ordered = wrongs.slice(); ordered.splice(desired-1,0,correct);
+    let nb='\n';
+    ordered.forEach((txt,i)=>{ const pos=i+1; nb += '    <div class="option" onclick="'+fn+'(this,'+pos+')">'+circ[pos]+' '+cleanOptionText(txt)+'</div>\n'; });
+    html = html.replace(blockRe, nb);
+    html = replaceCorrect(html, fn, desired);
+  }
+  return html;
+}
+
+function caseLoadingHtml(code,title){
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>로딩 중</title><style>body{margin:0;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif;background:#f4ede2;color:#3b3028;display:grid;place-items:center;min-height:100vh}.box{background:#fffaf1;border:1px solid #dbcdb8;border-radius:18px;padding:28px 24px;box-shadow:0 10px 30px rgba(0,0,0,.08);text-align:center;min-width:260px}.spinner{width:38px;height:38px;border:4px solid #eadbc4;border-top-color:#8c6239;border-radius:50%;margin:0 auto 14px;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.small{font-size:13px;color:#7b6a58;margin-top:8px}</style></head><body><div class="box"><div class="spinner"></div><div style="font-weight:800">CASE ${code}</div><div style="margin-top:6px;font-size:15px">${title}</div><div class="small">사건 파일을 불러오는 중입니다.</div></div></body></html>`;
+}
+
+function caseErrorHtml(code){
+  return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif;background:#f8efe7;color:#4b3026;display:grid;place-items:center;min-height:100vh}.box{background:#fff;border:1px solid #e1cfc2;border-radius:18px;padding:28px 24px;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.08)}.btn{display:inline-block;margin-top:14px;padding:10px 14px;border-radius:999px;border:none;background:#7a5234;color:#fff;font-weight:800;cursor:pointer}</style></head><body><div class="box"><div style="font-weight:900;font-size:18px">CASE ${code} 불러오기 실패</div><div style="margin-top:8px;line-height:1.6">사건 파일을 읽지 못했습니다. 파일 압축을 모두 푼 뒤 <b>index.html</b>로 실행했는지 확인해 주세요.</div><button class="btn" onclick="location.reload()">다시 시도</button></div></body></html>`;
+}
+
+function setCaseFrameFromCode(code){
+  const c=CASES.find(x=>x.code===code);
+  const b64=CASE_HTML[code];
+  if(!c || !b64){
+    document.getElementById("caseFrame").srcdoc=caseErrorHtml(code);
+    return;
+  }
+  const balanced = rebalanceCaseHtml(code, decodeBase64Utf8(b64));
+  document.getElementById("caseFrame").srcdoc=patchCaseForPacing(balanced);
+}
+
+function loadCaseData(code, done){
+  if(CASE_HTML[code]){ done(); return; }
+  if(CASE_LOAD_STATE[code] === 'loading'){
+    const timer = setInterval(()=>{
+      if(CASE_HTML[code]){ clearInterval(timer); done(); }
+      else if(CASE_LOAD_STATE[code] === 'error'){ clearInterval(timer); }
+    }, 80);
+    return;
+  }
+  const src = CASE_DATA_FILES[code];
+  if(!src){ done(); return; }
+  CASE_LOAD_STATE[code] = 'loading';
+  const s = document.createElement('script');
+  s.src = src;
+  s.async = true;
+  s.onload = ()=>{ CASE_LOAD_STATE[code] = 'loaded'; done(); };
+  s.onerror = ()=>{
+    CASE_LOAD_STATE[code] = 'error';
+    toast('사건 파일을 불러오지 못했습니다. 압축을 모두 푼 뒤 실행해 주세요.');
+    if(activeCaseCode===code) document.getElementById('caseFrame').srcdoc = caseErrorHtml(code);
+  };
+  document.head.appendChild(s);
+}
+
+function openCase(code){
+  const c=CASES.find(x=>x.code===code);if(!c)return;
+  activeCaseCode=code;
+  try{localStorage.setItem("history_detective_last_case",code)}catch(e){}
+  document.getElementById("viewerTitle").textContent=`CASE ${code} · ${c.title}`;
+  document.getElementById("viewer").classList.add("show");
+  document.body.style.overflow="hidden";
+  document.getElementById("caseFrame").srcdoc=caseLoadingHtml(code,c.title);
+  loadCaseData(code, ()=>{ if(activeCaseCode===code) setCaseFrameFromCode(code); });
+}
+
+function continueLast(){
+  let code=null;
+  try{code=localStorage.getItem("history_detective_last_case")}catch(e){}
+  const c=CASES.find(x=>x.code===code);
+  if(!c){toast("아직 최근 수사 기록이 없습니다.");return}
+  openCase(code);
+}
+
+function closeCase(){
+  document.getElementById("viewer").classList.remove("show");
+  document.body.style.overflow="";
+  document.getElementById("caseFrame").srcdoc="";
+  updateProgress();
+
+  if(document.getElementById("unitPage").classList.contains("show") && currentUnit){
+    openUnit(currentUnit);
+  } else if(document.getElementById("notebookPage").classList.contains("show")) {
+    showNotebook();
+  }
+  activeCaseCode=null;
+}
+
+function refreshCase(){
+  if(activeCaseCode){
+    const c=CASES.find(x=>x.code===activeCaseCode);
+    document.getElementById("caseFrame").srcdoc=caseLoadingHtml(activeCaseCode,c?c.title:'사건');
+    loadCaseData(activeCaseCode, ()=>{ if(activeCaseCode) setCaseFrameFromCode(activeCaseCode); });
+  }
+}
+
+window.addEventListener("focus",updateProgress);
+window.addEventListener("storage",updateProgress);
+updateProgress();
+</script>
+</body>
+</html>
