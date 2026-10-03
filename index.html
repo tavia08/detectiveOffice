@@ -164,11 +164,11 @@ button{font:inherit}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:1200;background:#352820;color:#fff4df;padding:10px 14px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;box-shadow:0 8px 20px rgba(0,0,0,.25);font-size:13px;font-weight:850}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-.viewer{display:none;position:fixed;inset:0;background:#201915;z-index:1000} .viewer.show{display:block}
+.viewer{display:none;position:fixed;inset:0;background:#201915;z-index:1000;height:100vh;height:100dvh;overflow:hidden} .viewer.show{display:block}
 .viewerbar{height:58px;background:#f4e6ce;border-bottom:1px solid #b4926a;display:flex;align-items:center;justify-content:space-between;padding:8px 12px;gap:10px}
 .viewer-left{display:flex;align-items:center;gap:10px;min-width:0} .viewer-title{font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .vbtn{border:1px solid #bea07d;background:#fff9ed;border-radius:9px;padding:8px 10px;font-weight:900;cursor:pointer;white-space:nowrap}
-.viewer iframe{width:100%;height:calc(100vh - 58px);border:0;background:#fff}
+.viewer iframe{width:100%;height:calc(100vh - 58px);height:calc(100dvh - 58px);border:0;background:#fff;display:block;overflow:auto;-webkit-overflow-scrolling:touch}
 .footer{text-align:center;color:#d7c4ae;font-size:12px;margin-top:16px}
 
 @media(max-width:900px){
@@ -460,6 +460,71 @@ function decodeBase64Utf8(b64){
 
 const PACING_GUARD_JS = "\n(function(){\n  let pacingPendingClue = null;\n  let pacingPendingBtn = null;\n  let pacingTimer = null;\n  let pacingSeconds = 0;\n\n  const originalCloseModal = (typeof window.closeModal === 'function') ? window.closeModal : null;\n\n  function getEl(id){ return document.getElementById(id); }\n  function clearPacingTimer(){\n    if(pacingTimer){ clearInterval(pacingTimer); pacingTimer = null; }\n  }\n  function clueActionButton(){\n    const modal = getEl('clueModal');\n    if(!modal) return null;\n    const buttons = modal.querySelectorAll('.modal-card .btn');\n    return buttons.length ? buttons[buttons.length - 1] : null;\n  }\n  function setAction(text, disabled, handler){\n    const b = clueActionButton();\n    if(!b) return;\n    b.textContent = text;\n    b.disabled = !!disabled;\n    b.removeAttribute('onclick');\n    b.onclick = handler || null;\n  }\n  function genericCompleteMessage(){\n    return '단서 수집 완료. 이제 자료를 해석해 보세요.';\n  }\n  function markClueConfirmed(){\n    const n = pacingPendingClue;\n    const btn = pacingPendingBtn;\n    if(n == null || !btn) return;\n    const d = clueData[n];\n    if(!found.has(n)){\n      found.add(n);\n      btn.classList.add('found');\n      const count = getEl('clueCountHud');\n      if(count) count.textContent = found.size;\n      const log = getEl('log' + n);\n      if(log){\n        log.classList.remove('lock');\n        log.innerHTML = '<b>' + d.title + '</b><br><span class=\"small\">' + d.points[0] + '</span>';\n      }\n      const fb = getEl('sceneFb');\n      if(fb) fb.textContent = d.title + ' 단서를 확인했습니다.';\n      if(found.size >= 4){\n        if(fb) fb.textContent = genericCompleteMessage();\n        function enableInterpretationButton(){\n          let q = getEl('toQuiz');\n          if(!q){ q = document.querySelector('button[onclick*=\"goStage(3)\"]:not(.secondary)'); }\n          if(q){\n            q.disabled = false;\n            q.removeAttribute('disabled');\n            q.removeAttribute('aria-disabled');\n            q.style.pointerEvents = 'auto';\n            q.style.opacity = '1';\n            q.style.cursor = 'pointer';\n          }\n        }\n        enableInterpretationButton();\n        setTimeout(enableInterpretationButton, 0);\n        setTimeout(enableInterpretationButton, 120);\n      }\n    }\n    window.closeModal();\n  }\n\n  window.closeModal = function(){\n    clearPacingTimer();\n    pacingPendingClue = null;\n    pacingPendingBtn = null;\n    if(originalCloseModal) return originalCloseModal();\n    const modal = getEl('clueModal');\n    if(modal){ modal.classList.remove('show'); modal.setAttribute('aria-hidden','true'); }\n  };\n\n  window.showClue = function(n, btn){\n    const d = clueData[n];\n    if(!d) return;\n    const modal = getEl('clueModal');\n    const icon = getEl('modalIcon'), code = getEl('modalCode'), title = getEl('modalTitle');\n    const desc = getEl('modalDesc'), points = getEl('modalPoints');\n    if(icon) icon.textContent = d.icon || '';\n    if(code) code.textContent = d.code || '';\n    if(title) title.textContent = d.title || '';\n    if(desc) desc.textContent = d.desc || '';\n    if(points) points.innerHTML = (d.points || []).map(function(p){ return '<li>' + p + '</li>'; }).join('');\n    if(modal){ modal.classList.add('show'); modal.setAttribute('aria-hidden','false'); }\n\n    clearPacingTimer();\n    pacingPendingClue = n;\n    pacingPendingBtn = btn;\n\n    if(found.has(n)){\n      setAction('이미 확인한 단서 · 닫기', false, window.closeModal);\n      return;\n    }\n\n    pacingSeconds = 4;\n    setAction('단서 읽는 중 · 4초', true, null);\n    pacingTimer = setInterval(function(){\n      pacingSeconds -= 1;\n      if(pacingSeconds > 0){\n        setAction('단서 읽는 중 · ' + pacingSeconds + '초', true, null);\n      } else {\n        clearPacingTimer();\n        setAction('✓ 단서 확인 완료', false, markClueConfirmed);\n      }\n    }, 1000);\n  };\n\n  function lockQuestion(box, ms, permanent){\n    if(!box) return;\n    const options = Array.prototype.slice.call(box.querySelectorAll('.option'));\n    options.forEach(function(o){\n      o.style.pointerEvents = 'none';\n      if(!permanent) o.style.opacity = '.68';\n    });\n    if(permanent){ box.dataset.pacingSolved = '1'; return; }\n    box.dataset.pacingBusy = '1';\n    setTimeout(function(){\n      if(box.dataset.pacingSolved === '1') return;\n      delete box.dataset.pacingBusy;\n      options.forEach(function(o){ o.style.pointerEvents = ''; o.style.opacity = ''; });\n    }, ms);\n  }\n\n  function wrapAnswerFunction(name){\n    const original = window[name];\n    if(typeof original !== 'function') return;\n    window[name] = function(el, n){\n      const box = el && el.parentElement;\n      if(box && (box.dataset.pacingBusy === '1' || box.dataset.pacingSolved === '1')) return;\n      original(el, n);\n      if(!el) return;\n      if(el.classList.contains('correct')){\n        lockQuestion(box, 0, true);\n      } else if(el.classList.contains('wrong')){\n        const feedback = box ? box.querySelector('.feedback') : null;\n        if(feedback && feedback.textContent.indexOf('2초 뒤') === -1){\n          feedback.textContent += ' · 피드백을 읽고 2초 뒤 다시 선택하세요.';\n        }\n        lockQuestion(box, 2000, false);\n      }\n    };\n  }\n\n  ['checkQ1','checkQ2','checkFinal'].forEach(wrapAnswerFunction);\n\n  if(typeof window.checkMatch === 'function'){\n    const originalCheckMatch = window.checkMatch;\n    let matchBusy = false;\n    window.checkMatch = function(){\n      if(matchBusy) return;\n      originalCheckMatch();\n      if(typeof matchOK !== 'undefined' && !matchOK){\n        const b = document.querySelector('button[onclick=\"checkMatch()\"]');\n        matchBusy = true;\n        if(b){ b.disabled = true; b.textContent = '단서 다시 확인 중…'; }\n        setTimeout(function(){\n          matchBusy = false;\n          if(b){ b.disabled = false; b.textContent = '연결 확인'; }\n        }, 2000);\n      }\n    };\n  }\n})();\n";
 const NAVIGATION_GUARD_JS = '(function(){\n  function safeParentCall(name,arg){\n    try{\n      if(parent && parent.historyDetectiveNavigate && typeof parent.historyDetectiveNavigate[name] === \'function\'){\n        parent.historyDetectiveNavigate[name](arg);\n        return true;\n      }\n    }catch(e){}\n    return false;\n  }\n\n  window.goUnitListFromReward=function(){\n    if(typeof window.closeReward===\'function\') window.closeReward();\n    safeParentCall(\'unitByCode\',\'__CASE_CODE__\');\n  };\n  window.goHomeFromReward=function(){\n    if(typeof window.closeReward===\'function\') window.closeReward();\n    safeParentCall(\'home\');\n  };\n  window.goNotebookFromReward=function(){\n    if(typeof window.closeReward===\'function\') window.closeReward();\n    if(!safeParentCall(\'notebook\') && typeof window.openNotebook===\'function\') window.openNotebook();\n  };\n\n  const reward=document.getElementById(\'rewardModal\');\n  if(!reward) return;\n  const nav=reward.querySelector(\'.nav\');\n  if(!nav) return;\n  nav.classList.add(\'reward-nav-v501\');\n  nav.style.justifyContent=\'center\';\n  nav.style.gap=\'10px\';\n  nav.style.flexWrap=\'wrap\';\n  nav.innerHTML=\'\'\n    + \'<button class="btn secondary" onclick="goUnitListFromReward()">같은 단원 사건 보기</button>\'\n    + \'<button class="btn secondary" onclick="goHomeFromReward()">탐정사무소 메인</button>\'\n    + \'<button class="btn" onclick="goNotebookFromReward()">탐정 수첩 확인</button>\';\n\n  if(!reward.querySelector(\'.reward-nav-help-v501\')){\n    const help=document.createElement(\'div\');\n    help.className=\'small reward-nav-help-v501\';\n    help.style.marginTop=\'10px\';\n    help.style.color=\'var(--muted)\';\n    help.textContent=\'스탬프 확인 후 원하는 화면으로 이동하세요.\';\n    nav.insertAdjacentElement(\'afterend\',help);\n  }\n})();';
+const TABLET_SCROLL_GUARD_JS = `(function(){
+  function isVisible(el){
+    if(!el) return false;
+    const s=getComputedStyle(el);
+    return s.display!=='none' && s.visibility!=='hidden' && el.getClientRects().length>0;
+  }
+  function findNextStageButton(){
+    const candidates=Array.from(document.querySelectorAll('button'));
+    return candidates.find(function(b){
+      const oc=b.getAttribute('onclick')||'';
+      const label=(b.textContent||'').replace(/\s+/g,' ').trim();
+      return isVisible(b) && !b.disabled && b.getAttribute('aria-disabled')!=='true' &&
+        (oc.indexOf('goStage(4)')>=0 || label.indexOf('핵심 추론')>=0);
+    }) || null;
+  }
+  function revealNextStage(){
+    const b=findNextStageButton();
+    if(!b) return;
+    setTimeout(function(){
+      try{ b.scrollIntoView({behavior:'smooth',block:'center'}); }
+      catch(e){ b.scrollIntoView(false); }
+    },120);
+  }
+
+  // 세로 공간이 짧은 태블릿 가로모드에서도 본문 끝까지 스크롤되도록 강제 보정
+  document.documentElement.style.minHeight='100%';
+  document.documentElement.style.height='auto';
+  document.documentElement.style.overflowY='auto';
+  document.body.style.minHeight='100%';
+  document.body.style.height='auto';
+  document.body.style.overflowY='auto';
+  document.body.style.webkitOverflowScrolling='touch';
+
+  // 정답 처리 후 핵심 추론 버튼이 활성화되면 자동으로 화면 안에 보여 줌
+  const obs=new MutationObserver(function(muts){
+    let relevant=false;
+    muts.forEach(function(m){
+      if(m.type==='attributes' || m.type==='childList') relevant=true;
+    });
+    if(relevant) revealNextStage();
+  });
+  obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['disabled','class','style','aria-disabled']});
+
+  ['orientationchange','resize'].forEach(function(ev){
+    window.addEventListener(ev,function(){
+      setTimeout(function(){
+        document.body.style.overflowY='auto';
+        document.documentElement.style.overflowY='auto';
+      },180);
+    },{passive:true});
+  });
+})();`;
+const TABLET_SCROLL_GUARD_CSS = `<style data-tablet-scroll-guard="v5.0.2">
+html,body{min-height:100%!important;height:auto!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain}
+body{padding-bottom:max(96px,env(safe-area-inset-bottom))!important}
+.app{padding-bottom:max(96px,env(safe-area-inset-bottom))!important}
+.screen{min-height:auto!important;height:auto!important;overflow:visible!important;padding-bottom:max(120px,env(safe-area-inset-bottom))!important}
+@media (orientation:landscape) and (max-height:760px){
+  body{padding-bottom:140px!important}
+  .app{padding-bottom:140px!important}
+  .screen{min-height:auto!important;padding-bottom:180px!important}
+  .panel:last-child,.nav:last-child{margin-bottom:40px!important}
+}
+</style>`;
+
 function patchCaseForPacing(caseHtml, code){
   const scriptClose = '</scr' + 'ipt>';
   let guard = '';
@@ -472,6 +537,10 @@ function patchCaseForPacing(caseHtml, code){
     const navOpen = '<script data-navigation-guard="v5.0.1">';
     const navCode = NAVIGATION_GUARD_JS.replace('__CASE_CODE__', code);
     guard += navOpen + navCode + scriptClose;
+  }
+  if(!caseHtml.includes('data-tablet-scroll-guard="v5.0.2"')){
+    const scrollOpen = '<script data-tablet-scroll-guard="v5.0.2">';
+    guard += TABLET_SCROLL_GUARD_CSS + scrollOpen + TABLET_SCROLL_GUARD_JS + scriptClose;
   }
   if(!guard) return caseHtml;
   return caseHtml.includes('</body>') ? caseHtml.replace('</body>', guard + '</body>') : caseHtml + guard;
