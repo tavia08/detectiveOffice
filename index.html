@@ -91,32 +91,38 @@ button{font:inherit}
 
 .board-progress{
   position:absolute;z-index:4;
-  left:71.2%;top:17.0%;width:10.8%;height:28.5%;
-  background:rgba(248,232,198,.74);
-  border:1px solid rgba(126,91,53,.58);
+  left:70.7%;top:16.4%;width:12.2%;height:42.2%;
+  background:rgba(248,232,198,.86);
+  border:1px solid rgba(126,91,53,.64);
   border-radius:8px;
-  padding:12px 9px;
-  box-shadow:0 3px 10px rgba(0,0,0,.10);
-  transform:rotate(-0.4deg);
+  padding:13px 10px 14px;
+  box-shadow:0 3px 10px rgba(0,0,0,.11);
+  transform:rotate(-0.25deg);
   pointer-events:none;
-  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  display:flex;flex-direction:column;justify-content:flex-start;align-items:center;
   text-align:center;
   backdrop-filter:blur(1.2px)
 }
 .board-progress b{
-  display:block;font-size:clamp(9px,.80vw,13px);line-height:1.25;margin-bottom:10px
+  display:block;font-size:clamp(9px,.80vw,13px);line-height:1.25;margin:4px 0 16px
 }
 .board-progress .count-large{
-  font-size:clamp(17px,1.45vw,25px);font-weight:950;color:#4e3b2c;line-height:1;margin-bottom:10px
+  font-size:clamp(18px,1.55vw,26px);font-weight:950;color:#4e3b2c;line-height:1;margin-bottom:12px
 }
 .board-progress .bar{
-  width:84%;height:8px;background:rgba(176,151,118,.45);border-radius:999px;overflow:hidden;margin:2px 0 9px
+  width:84%;height:8px;background:rgba(176,151,118,.45);border-radius:999px;overflow:hidden;margin:2px 0 10px
 }
 .board-progress .fill{
   height:100%;width:0;background:rgba(135,93,53,.86);border-radius:999px;transition:.3s
 }
 .board-progress span{
   font-size:clamp(7px,.62vw,10px);color:#625447;line-height:1.35
+}
+
+.board-message{
+  width:84%;margin-top:auto;padding-top:13px;
+  border-top:1px solid rgba(126,91,53,.34);
+  color:#4f392b;font-size:clamp(8px,.72vw,12px);line-height:1.45;font-weight:950
 }
 
 .hint{
@@ -173,13 +179,13 @@ button{font:inherit}
 
 @media(max-width:900px){
   .case-grid{grid-template-columns:1fr} .stamp-grid{grid-template-columns:repeat(3,1fr)}
-  .board-progress{left:70%;top:16.5%;width:12.5%;height:29.5%}
+  .board-progress{left:69.8%;top:16.2%;width:13.3%;height:42.5%;padding:9px 7px 10px}
 }
 @media(max-width:650px){
   .app{padding-left:8px;padding-right:8px} .topbar{align-items:flex-start}
   .stats .hide-sm{display:none} .office-title{padding:6px 8px}
   .hotspot .tag{padding:3px 5px;font-size:7px}
-  .board-progress{padding:4px 4px} .board-progress .bar{height:4px} .board-progress b{margin-bottom:4px} .board-progress .count-large{margin-bottom:4px}
+  .board-progress{padding:6px 5px 7px} .board-progress .bar{height:4px} .board-progress b{margin:2px 0 7px} .board-progress .count-large{margin-bottom:6px} .board-message{padding-top:6px;font-size:clamp(7px,.72vw,10px)}
   .stamp-grid{grid-template-columns:repeat(2,1fr)}
   .case-file{grid-template-columns:auto 1fr} .case-state{grid-column:2}
 }
@@ -222,10 +228,11 @@ button{font:inherit}
       </div>
 
       <div class="board-progress">
-        <b>전체 수사 현황</b>
+        <b>📌 전체 수사 현황</b>
         <div class="count-large" id="boardCount">0 / 44</div>
         <div class="bar"><div class="fill" id="boardFill"></div></div>
         <span id="boardText">사건 해결 · 0%</span>
+        <div class="board-message">이제 모든 수수께끼가 풀렸어!</div>
       </div>
 
       <button class="hotspot folder-1" id="unitHot1" onclick="openUnit(1)" aria-label="1단원">
@@ -255,9 +262,7 @@ button{font:inherit}
         <span class="tag">☎ 최근 사건</span>
       </button>
 
-      <button class="hotspot special board-hot" onclick="showOverview()" aria-label="전체 수사 현황">
-        <span class="tag">📌 수사 현황</span>
-      </button>
+      <button class="hotspot special board-hot" onclick="showOverview()" aria-label="전체 수사 현황"></button>
     </section>
 
     <div class="hint">책상 위 사건 서류철을 클릭해 단원을 선택하세요. 전화기는 최근 사건 이어하기, 갈색 수첩은 탐정 수첩입니다.</div>
