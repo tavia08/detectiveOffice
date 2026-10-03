@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>역사 탐정사무소 v3</title>
+<title>역사 탐정사무소 v5.0.4</title>
 <style>
 :root{
   --ink:#2f251f; --paper:#fff8e9; --paper2:#ead5b2;
@@ -91,38 +91,47 @@ button{font:inherit}
 
 .board-progress{
   position:absolute;z-index:4;
-  left:70.7%;top:16.4%;width:12.2%;height:42.2%;
-  background:rgba(248,232,198,.86);
-  border:1px solid rgba(126,91,53,.64);
-  border-radius:8px;
-  padding:13px 10px 14px;
-  box-shadow:0 3px 10px rgba(0,0,0,.11);
-  transform:rotate(-0.25deg);
+  /* 오른쪽 지도 한 장을 통째로 덮는 게시물 크기 */
+  left:70.15%;top:15.85%;width:13.15%;height:43.7%;
+  background:
+    linear-gradient(rgba(255,248,226,.98),rgba(247,229,194,.98)),
+    repeating-linear-gradient(0deg,rgba(126,91,53,.018) 0 1px,transparent 1px 5px);
+  border:2px solid rgba(126,91,53,.78);
+  border-radius:7px;
+  padding:14px 11px 15px;
+  box-shadow:0 4px 12px rgba(0,0,0,.16), inset 0 0 0 1px rgba(255,255,255,.55);
+  transform:rotate(-0.15deg);
   pointer-events:none;
   display:flex;flex-direction:column;justify-content:flex-start;align-items:center;
   text-align:center;
-  backdrop-filter:blur(1.2px)
 }
+.board-progress::before,.board-progress::after{
+  content:"";position:absolute;width:7px;height:7px;border-radius:50%;
+  background:#8d5b35;box-shadow:inset 0 1px 1px rgba(255,255,255,.45),0 1px 2px rgba(0,0,0,.28);top:7px
+}
+.board-progress::before{left:7px}.board-progress::after{right:7px}
 .board-progress b{
-  display:block;font-size:clamp(9px,.80vw,13px);line-height:1.25;margin:4px 0 16px
+  display:inline-block;font-size:clamp(9px,.82vw,13px);line-height:1.2;margin:3px 0 16px;
+  padding:6px 9px;border-radius:999px;background:#5a3d2d;color:#fff4dc;
+  box-shadow:0 2px 5px rgba(0,0,0,.13)
 }
 .board-progress .count-large{
-  font-size:clamp(18px,1.55vw,26px);font-weight:950;color:#4e3b2c;line-height:1;margin-bottom:12px
+  font-size:clamp(19px,1.65vw,27px);font-weight:950;color:#4e3b2c;line-height:1;margin-bottom:12px
 }
 .board-progress .bar{
-  width:84%;height:8px;background:rgba(176,151,118,.45);border-radius:999px;overflow:hidden;margin:2px 0 10px
+  width:86%;height:8px;background:#d8c4a7;border-radius:999px;overflow:hidden;margin:3px 0 10px
 }
 .board-progress .fill{
-  height:100%;width:0;background:rgba(135,93,53,.86);border-radius:999px;transition:.3s
+  height:100%;width:0;background:#a96d2c;border-radius:999px;transition:.3s
 }
 .board-progress span{
-  font-size:clamp(7px,.62vw,10px);color:#625447;line-height:1.35
+  font-size:clamp(7px,.64vw,10px);color:#625447;line-height:1.35
 }
 
 .board-message{
-  width:84%;margin-top:auto;padding-top:13px;
-  border-top:1px solid rgba(126,91,53,.34);
-  color:#4f392b;font-size:clamp(8px,.72vw,12px);line-height:1.45;font-weight:950
+  width:88%;margin-top:auto;padding:13px 2px 3px;
+  border-top:1px solid rgba(126,91,53,.42);
+  color:#4f392b;font-size:clamp(9px,.78vw,13px);line-height:1.35;font-weight:950
 }
 
 .hint{
@@ -179,13 +188,13 @@ button{font:inherit}
 
 @media(max-width:900px){
   .case-grid{grid-template-columns:1fr} .stamp-grid{grid-template-columns:repeat(3,1fr)}
-  .board-progress{left:69.8%;top:16.2%;width:13.3%;height:42.5%;padding:9px 7px 10px}
+  .board-progress{left:69.9%;top:15.6%;width:13.7%;height:44.0%;padding:10px 8px 11px}
 }
 @media(max-width:650px){
   .app{padding-left:8px;padding-right:8px} .topbar{align-items:flex-start}
   .stats .hide-sm{display:none} .office-title{padding:6px 8px}
   .hotspot .tag{padding:3px 5px;font-size:7px}
-  .board-progress{padding:6px 5px 7px} .board-progress .bar{height:4px} .board-progress b{margin:2px 0 7px} .board-progress .count-large{margin-bottom:6px} .board-message{padding-top:6px;font-size:clamp(7px,.72vw,10px)}
+  .board-progress{padding:7px 6px 8px} .board-progress .bar{height:5px} .board-progress b{margin:2px 0 8px;padding:4px 6px} .board-progress .count-large{margin-bottom:7px} .board-message{padding-top:7px;font-size:clamp(7px,.74vw,10px)}
   .stamp-grid{grid-template-columns:repeat(2,1fr)}
   .case-file{grid-template-columns:auto 1fr} .case-state{grid-column:2}
 }
