@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<rect width="200" height="200" fill="none"/>
+<circle cx="100" cy="100" r="82" fill="#fffaf1" stroke="#9b5145" stroke-width="7"/>
+<circle cx="100" cy="100" r="69" fill="none" stroke="#9b5145" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="100" y="54" text-anchor="middle" font-size="24" font-weight="900" fill="#9b5145">史</text>
+<g fill="#7f4037" font-family="Noto Sans KR, sans-serif"><text x="100" y="112" text-anchor="middle" font-size="20" font-weight="800">8조법</text></g>
+<text x="100" y="154" text-anchor="middle" font-size="13" font-weight="800" fill="#9b5145">대표 사료 수사 완료</text>
+<text x="100" y="176" text-anchor="middle" font-size="11" font-weight="700" fill="#7f4037">학습지 1-2</text>
+</svg>
