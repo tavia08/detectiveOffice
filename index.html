@@ -696,36 +696,182 @@ updateProgress();
 
 
 
+
 <style data-curriculum-source-integration="v1">
+/* ===== 단원 사건 목록 가독성 개선 패치 ===== */
 .curriculum-section-title{
   grid-column:1/-1;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  margin:2px 0 4px;padding:12px 14px;border-radius:13px;
-  background:#efe0c9;border:1px solid #c8aa86;color:#4b382b;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin:8px 0 2px;
+  padding:13px 16px;
+  border-radius:12px;
+  font-weight:900;
 }
-.curriculum-section-title b{font-size:15px}
-.curriculum-section-title span{font-size:11px;color:#756454}
-.case-file.source-case{
-  border:2px solid #9c724e;
-  background:linear-gradient(180deg,#fffaf0,#f7ead6);
-  position:relative;
+.curriculum-section-title b{
+  font-size:16px;
+  letter-spacing:-.02em;
 }
-.case-file.source-case::before{
-  content:"대표 사료 수사";
-  display:inline-block;margin-bottom:8px;padding:4px 7px;border-radius:999px;
-  background:#654633;color:#fff5e7;font-size:10px;font-weight:900;
+.curriculum-section-title span{
+  font-size:11px;
+  font-weight:800;
 }
-.case-file.source-case.solved::before{content:"✓ 대표 사료 수사 완료";background:#4f7659}
-.case-file.extra-case{opacity:.92}
-.case-file.extra-case::before{
-  content:"추가 수사 · 선택";
-  display:inline-block;margin-bottom:8px;padding:4px 7px;border-radius:999px;
-  background:#ded0bd;color:#5d4a3c;font-size:10px;font-weight:900;
+.curriculum-section-title.source-section{
+  background:#5b3a27;
+  border:1px solid #4b2f20;
+  color:#fff8ed;
+  box-shadow:0 4px 10px rgba(63,38,22,.14);
 }
-.source-topic{font-size:11px;color:#7a6656;margin-top:7px;line-height:1.4}
+.curriculum-section-title.source-section span{color:#eadbc9}
+.curriculum-section-title.extra-section{
+  background:#e8d5b9;
+  border:1px solid #c5a37c;
+  color:#4d392b;
+}
+.curriculum-section-title.extra-section span{color:#766352}
+
+/* 수업 안내 */
 .unit-guide{
-  grid-column:1/-1;padding:11px 13px;border-radius:12px;background:#f8f1e7;
-  border:1px dashed #cbb294;font-size:12px;line-height:1.55;color:#625347;
+  grid-column:1/-1;
+  padding:12px 15px;
+  border-radius:12px;
+  background:#fffaf1;
+  border:1px solid #d5b996;
+  border-left:5px solid #8b6041;
+  font-size:12px;
+  line-height:1.6;
+  color:#5c493b;
+  box-shadow:0 3px 8px rgba(80,52,32,.05);
+}
+
+/* 공통 카드 */
+.case-file.source-case,
+.case-file.extra-case{
+  display:block;
+  position:relative;
+  text-align:left;
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+.case-file.source-case:hover,
+.case-file.extra-case:hover{
+  transform:translateY(-2px);
+}
+
+/* 대표 사료 수사 */
+.case-file.source-case{
+  min-height:132px;
+  padding:17px 18px 15px;
+  border:2px solid #9f744e;
+  background:#fffdf8;
+  border-radius:14px;
+  box-shadow:0 6px 15px rgba(79,49,29,.09);
+}
+.case-file.source-case:hover{
+  border-color:#765037;
+  box-shadow:0 9px 18px rgba(79,49,29,.14);
+}
+.case-file.source-case.solved{
+  border-color:#799578;
+  background:#fbfdf8;
+}
+.source-card-top,
+.extra-card-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:12px;
+}
+.case-file.source-case .case-no{
+  padding:5px 9px;
+  border-radius:8px;
+  background:#ead3ad;
+  border:1px solid #c89f6e;
+  color:#5e3d28;
+  font-size:11px;
+  font-weight:950;
+}
+.case-file.source-case .case-title{
+  margin:0 0 12px;
+  font-size:16px;
+  line-height:1.45;
+  font-weight:950;
+  color:#241b16;
+  letter-spacing:-.025em;
+}
+.case-file.source-case .source-topic{
+  margin:0;
+  font-size:11px;
+  line-height:1.4;
+  color:#766352;
+  font-weight:750;
+}
+.case-file.source-case .case-state{
+  flex:0 0 auto;
+  padding:5px 8px;
+  border-radius:999px;
+  background:#ece4d7;
+  color:#6e6258;
+  font-size:10px;
+  font-weight:900;
+}
+.case-file.source-case.solved .case-state{
+  background:#dce9d9;
+  color:#3f6443;
+}
+
+/* 추가 수사: 정보량을 줄여 대표 수사와 시각적으로 분리 */
+.case-file.extra-case{
+  min-height:92px;
+  padding:14px 16px;
+  border:1px solid #c9aa84;
+  background:#fbf6ec;
+  border-radius:12px;
+  box-shadow:0 3px 9px rgba(79,49,29,.05);
+}
+.case-file.extra-case:hover{
+  border-color:#a7835f;
+  box-shadow:0 6px 12px rgba(79,49,29,.09);
+}
+.case-file.extra-case.solved{
+  border-color:#9bb095;
+  background:#f7faf3;
+}
+.case-file.extra-case .case-no{
+  padding:4px 8px;
+  border-radius:7px;
+  background:#eadfcf;
+  border:0;
+  color:#6a594c;
+  font-size:10px;
+}
+.case-file.extra-case .case-title{
+  margin:0;
+  font-size:14px;
+  line-height:1.4;
+  font-weight:850;
+  color:#372c25;
+}
+.case-file.extra-case .case-state{
+  padding:4px 7px;
+  font-size:10px;
+  white-space:nowrap;
+}
+
+/* 기존 pseudo badge 제거: 섹션 제목으로 충분히 구분 */
+.case-file.source-case::before,
+.case-file.extra-case::before{
+  content:none !important;
+  display:none !important;
+}
+
+/* 넓은 화면에서는 2열 유지, 작은 화면은 1열 */
+@media(max-width:760px){
+  .case-grid{grid-template-columns:1fr}
+  .case-file.source-case{min-height:0}
+  .case-file.source-case .case-title{font-size:15px}
 }
 </style>
 
@@ -795,11 +941,11 @@ openUnit = function(u){
 
     const guide=document.createElement("div");
     guide.className="unit-guide";
-    guide.innerHTML="<b>수업 진행:</b> 오늘 학습지 번호와 같은 <b>대표 사료 수사 1개</b>를 먼저 해결합니다. 자료를 읽고 정체를 확인한 뒤, 질문에 맞는 직접 근거 두 개를 골라 역사적 의미를 추론합니다. 아래 기존 사건은 빠르게 끝낸 학생을 위한 <b>추가 수사</b>입니다.";
+    guide.innerHTML="<b>수업 진행:</b> 오늘 학습지 번호와 같은 <b>대표 사료 수사 1개</b>를 먼저 해결합니다. 자료를 읽고 근거를 찾아 역사적 의미를 추론합니다. 아래 사건은 빠르게 끝낸 학생을 위한 <b>추가 수사</b>입니다.";
     grid.appendChild(guide);
 
     const h1=document.createElement("div");
-    h1.className="curriculum-section-title";
+    h1.className="curriculum-section-title source-section";
     h1.innerHTML=`<b>📜 대표 사료 수사</b><span>필수 · 학습지와 1:1 연결 · ${done}/${reps.length}</span>`;
     grid.appendChild(h1);
 
@@ -807,25 +953,29 @@ openUnit = function(u){
       const b=document.createElement("button");
       b.className="case-file source-case"+(sourceSolved(c)?" solved":"");
       b.onclick=()=>openSourceCase(c.code);
-      b.innerHTML=`<div class="case-no">학습지 ${c.ws}</div>
+      b.innerHTML=`<div class="source-card-top">
+          <div class="case-no">학습지 ${c.ws}</div>
+          <div class="case-state">${sourceSolved(c)?"✓ 완료":"미해결"}</div>
+        </div>
         <div class="case-title">${c.title}</div>
-        <div class="source-topic">${c.source_type} · 역사적 사고: ${c.thinking}</div>
-        <div class="case-state">${sourceSolved(c)?"✓ 사료 수사 완료":"미해결 대표 수사"}</div>`;
+        <div class="source-topic">${c.source_type} · ${c.thinking}</div>`;
       grid.appendChild(b);
     });
 
     const old=CASES.filter(c=>c.unit===u);
     const h2=document.createElement("div");
-    h2.className="curriculum-section-title";
+    h2.className="curriculum-section-title extra-section";
     h2.innerHTML=`<b>🗂️ 추가 수사 사건</b><span>선택 · 기존 ${old.length}개 사건 보존</span>`;
     grid.appendChild(h2);
     old.forEach(c=>{
       const b=document.createElement("button");
       b.className="case-file extra-case"+(solved(c)?" solved":"");
       b.onclick=()=>openCase(c.code);
-      b.innerHTML=`<div class="case-no">CASE ${c.code}</div>
-        <div class="case-title">${c.title}</div>
-        <div class="case-state">${solved(c)?"✓ 해결 완료":"선택 수사"}</div>`;
+      b.innerHTML=`<div class="extra-card-top">
+          <div class="case-no">CASE ${c.code}</div>
+          <div class="case-state">${solved(c)?"✓ 완료":"선택"}</div>
+        </div>
+        <div class="case-title">${c.title}</div>`;
       grid.appendChild(b);
     });
   }else{
