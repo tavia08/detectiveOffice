@@ -1171,5 +1171,49 @@ showOverview=function(){
 
 updateProgress();
 </script>
+<script>
+
+/* ===== Legacy case professional icon enhancer ===== */
+const HD_UI_ICON_BASE='assets/ui_icons/';
+function hdIconForText(text){
+  const t=(text||'').replace(/\s+/g,' ');
+  if(/전쟁|전투|군사|장용영|왜군|침입|항쟁|정벌|성곽|무신|군대|수군|전쟁|병자|임진|몽골|거란/.test(t)) return 'war.png';
+  if(/외교|사신|교린|통신사|연행|담판|조약|명나라|후금|청나라|일본|여진|교역|국교/.test(t)) return 'diplomacy.png';
+  if(/시장|상업|경제|화폐|상평통보|공인|장시|농업|모내기|상품|무역|세금|대동법|공납/.test(t)) return 'economy.png';
+  if(/신분|노비|가족|혼인|향촌|백성|농민|봉기|생활|사회|공명첩|족보/.test(t)) return 'society.png';
+  if(/문화|불교|유물|그림|풍속화|산수화|실록|직지|훈민정음|규장각|책|학문|서원|성리학|과학|인쇄|천문/.test(t)) return 'culture.png';
+  if(/왕|정치|붕당|탕평|관청|제도|재상|관리|왕권|개혁|과거|정부|통치|회의|비변사/.test(t)) return 'government.png';
+  return 'source-analysis.png';
+}
+function hdImg(doc,file,cls='hd-inline-icon'){
+  const im=doc.createElement('img'); im.src=HD_UI_ICON_BASE+file; im.alt=''; im.className=cls; return im;
+}
+function enhanceLegacyCaseIcons(){
+  const frame=document.getElementById('caseFrame');
+  if(!frame) return;
+  let doc; try{doc=frame.contentDocument;}catch(e){return;} if(!doc||!doc.body)return;
+  if(doc.getElementById('hd-pro-icon-style')) return;
+  const st=doc.createElement('style'); st.id='hd-pro-icon-style'; st.textContent=`
+    .hd-inline-icon{width:22px;height:22px;object-fit:contain;vertical-align:-6px;margin-right:5px}
+    .hd-modal-icon-img{width:42px;height:42px;object-fit:contain;display:block}
+    .hd-reward-icon-img{width:58px;height:58px;object-fit:contain;display:block;margin:auto}
+    .modal-icon{display:grid!important;place-items:center!important;overflow:hidden}
+  `; doc.head.appendChild(st);
+  function stripEmoji(el){
+    if(!el) return; for(const n of [...el.childNodes]) if(n.nodeType===3) n.nodeValue=n.nodeValue.replace(/[📂🔎📖📚🛡️⚖️👑🏺⚔️🐉🏯📜🕯️🗂️📌☎️🧭🪙🎨🤝]/gu,'').replace(/^\s+/,'');
+  }
+  // top controls
+  doc.querySelectorAll('.book-btn,button').forEach(el=>{if(/탐정 수첩/.test(el.textContent)&&!el.querySelector('.hd-inline-icon')){stripEmoji(el);el.prepend(hdImg(doc,'notebook.png'));}});
+  doc.querySelectorAll('.chip').forEach(el=>{const txt=el.textContent;if(!el.querySelector('.hd-inline-icon')){if(/단서/.test(txt)){stripEmoji(el);el.prepend(hdImg(doc,'source-analysis.png'));}else if(/사건/.test(txt)){stripEmoji(el);el.prepend(hdImg(doc,'detective-case.png'));}}});
+  function refreshDynamic(){
+    doc.querySelectorAll('.modal-icon').forEach(el=>{const card=el.closest('.modal-card')||el.parentElement;const title=card?.querySelector('#modalTitle,h3')?.textContent||card?.textContent||'';const file=hdIconForText(title); if(el.dataset.hdIcon!==file){el.textContent='';el.append(hdImg(doc,file,'hd-modal-icon-img'));el.dataset.hdIcon=file;}});
+    doc.querySelectorAll('.reward-burst .icon,.artifact-stamp .icon').forEach(el=>{const box=el.parentElement;const title=box?.querySelector('.title')?.textContent||box?.textContent||'';const file=hdIconForText(title);if(el.dataset.hdIcon!==file){el.textContent='';el.append(hdImg(doc,file,'hd-reward-icon-img'));el.dataset.hdIcon=file;}});
+  }
+  refreshDynamic();
+  const obs=new MutationObserver(refreshDynamic); obs.observe(doc.body,{childList:true,subtree:true,characterData:true});
+}
+document.getElementById('caseFrame')?.addEventListener('load',()=>setTimeout(enhanceLegacyCaseIcons,80));
+/* ===== End legacy icon enhancer ===== */
+</script>
 </body>
 </html>
