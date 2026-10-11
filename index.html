@@ -248,10 +248,10 @@ button{font:inherit}
   <header class="topbar">
     <div class="brand">
       <div class="seal">史</div>
-      <div><div class="brand-title">역사 탐정사무소</div><div class="small">통합 사건 수사본부 · 44개 사건</div></div>
+      <div><div class="brand-title">역사 탐정사무소</div><div class="small">통합 사건 수사본부 · 75개 사건</div></div>
     </div>
     <div class="stats">
-      <div class="chip">해결 <span id="solvedTop">0</span>/44</div>
+      <div class="chip">해결 <span id="solvedTop">0</span>/75</div>
       <div class="chip hide-sm">진행률 <span id="percentTop">0</span>%</div>
       <button class="top-btn" onclick="showNotebook()"><img class="ui-mini-icon" src="assets/ui_icons/notebook.png" alt="">탐정 수첩</button>
     </div>
@@ -268,7 +268,7 @@ button{font:inherit}
 
       <div class="board-progress">
         <b><img class="ui-mini-icon" src="assets/ui_icons/source-analysis.png" alt="">전체 수사 현황</b>
-        <div class="count-large" id="boardCount">0 / 44</div>
+        <div class="count-large" id="boardCount">0 / 75</div>
         <div class="bar"><div class="fill" id="boardFill"></div></div>
         <span id="boardText">사건 해결 · 0%</span>
         <div class="board-message">이제 모든 수수께끼가 풀렸어!</div>
@@ -328,7 +328,7 @@ button{font:inherit}
 
       <div class="notebook-section required">
         <div class="notebook-section-head">
-          <div><b><img class="ui-head-icon" src="assets/ui_icons/scroll-search.png" alt="">대표 사료 수사 스탬프</b><span>수업 필수 · 학습지와 1:1 연결</span></div>
+          <div><b><img class="ui-head-icon" src="assets/ui_icons/scroll-search.png" alt="">사료 분석 스탬프</b><span>학습지 기반 사료 분석 사건</span></div>
           <strong id="sourceStampCount">0 / 31</strong>
         </div>
         <div class="stamp-grid source-stamp-grid" id="sourceStampGrid"></div>
@@ -336,7 +336,7 @@ button{font:inherit}
 
       <div class="notebook-section extra">
         <div class="notebook-section-head">
-          <div><b><img class="ui-head-icon" src="assets/ui_icons/detective-case.png" alt="">추가 수사 스탬프</b><span>선택 · 기존 탐정 사건</span></div>
+          <div><b><img class="ui-head-icon" src="assets/ui_icons/detective-case.png" alt="">탐구 사건 스탬프</b><span>기존 탐정형 탐구 사건</span></div>
           <strong id="extraStampCount">0 / 44</strong>
         </div>
         <div class="stamp-grid" id="stampGrid"></div>
@@ -344,7 +344,7 @@ button{font:inherit}
     </div>
   </section>
 
-  <div class="footer">역사 탐정소 · 대표 사료수사 31개 + 추가 수사 44개</div>
+  <div class="footer">역사 탐정소 · 전체 75개 사건</div>
 </div>
 
 <div class="modal" id="overviewModal" onclick="if(event.target===this)hideOverview()">
@@ -495,7 +495,7 @@ function showNotebook(){
     div.className="record source-record"+(got?" got":"");
     div.onclick=()=>openSourceCase(c.code);
     div.innerHTML=`<div class="mark">${got?"◉ 스탬프 획득":"○ 미해결"}</div>
-      <div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code] || ('source_stamps/' + c.code + '.svg')}" alt="학습지 ${c.ws} 대표 사료 수사 스탬프"></div>
+      <div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code] || ('source_stamps/' + c.code + '.svg')}" alt="학습지 ${c.ws} 사료 분석 스탬프"></div>
       <div>
         <div class="small">학습지 ${c.ws}</div>
         <div class="source-record-title">${c.title}</div>
@@ -641,7 +641,301 @@ function patchCaseForPacing(caseHtml, code){
     guard += TABLET_SCROLL_GUARD_CSS + scrollOpen + TABLET_SCROLL_GUARD_JS + scriptClose;
   }
   if(!guard) return caseHtml;
-  return caseHtml.includes('</body>') ? caseHtml.replace('</body>', guard + '</body>') : caseHtml + guard;
+  return caseHtml.includes('
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body>') ? caseHtml.replace('
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body>', guard + '
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body>') : caseHtml + guard;
 }
 
 function cleanOptionText(s){ return s.replace(/^[①②③]\s*/,'').replace(/\s+/g,' ').trim(); }
@@ -684,12 +978,208 @@ function caseLoadingHtml(code,title){
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>로딩 중</title><style>body{margin:0;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif;background:#f4ede2;color:#3b3028;display:grid;place-items:center;min-height:100vh}.box{background:#fffaf1;border:1px solid #dbcdb8;border-radius:18px;padding:28px 24px;box-shadow:0 10px 30px rgba(0,0,0,.08);text-align:center;min-width:260px}.spinner{width:38px;height:38px;border:4px solid #eadbc4;border-top-color:#8c6239;border-radius:50%;margin:0 auto 14px;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.small{font-size:13px;color:#7b6a58;margin-top:8px}</style></head><body><div class="box"><div class="spinner"></div><div style="font-weight:800">CASE ${code}</div><div style="margin-top:6px;font-size:15px">${title}</div><div class="small">사건 파일을 불러오는 중입니다.</div></div>
 
 
+
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
 </body></html>`;
 }
 
 function caseErrorHtml(code){
   return `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;font-family:Pretendard,"Noto Sans KR",system-ui,sans-serif;background:#f8efe7;color:#4b3026;display:grid;place-items:center;min-height:100vh}.box{background:#fff;border:1px solid #e1cfc2;border-radius:18px;padding:28px 24px;max-width:420px;box-shadow:0 10px 30px rgba(0,0,0,.08)}.btn{display:inline-block;margin-top:14px;padding:10px 14px;border-radius:999px;border:none;background:#7a5234;color:#fff;font-weight:800;cursor:pointer}</style></head><body><div class="box"><div style="font-weight:900;font-size:18px">CASE ${code} 불러오기 실패</div><div style="margin-top:8px;line-height:1.6">사건 파일을 읽지 못했습니다. 파일 압축을 모두 푼 뒤 <b>index.html</b>로 실행했는지 확인해 주세요.</div><button class="btn" onclick="location.reload()">다시 시도</button></div>
 
+
+
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
 
 </body></html>`;
 }
@@ -1082,10 +1572,206 @@ openUnit = function(u){
 };
 
 function sourceLoadingHtml(code,title){
-  return `<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;background:#f4ede2;display:grid;place-items:center;min-height:100vh;color:#42352c}.b{background:#fffaf1;padding:24px;border-radius:18px;border:1px solid #d8c3aa;text-align:center}</style><body><div class="b"><b>${code}</b><p>${title}</p><small>대표 사료 수사를 불러오는 중입니다.</small></div></body></html>`;
+  return `<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;background:#f4ede2;display:grid;place-items:center;min-height:100vh;color:#42352c}.b{background:#fffaf1;padding:24px;border-radius:18px;border:1px solid #d8c3aa;text-align:center}</style><body><div class="b"><b>${code}</b><p>${title}</p><small>대표 사료 수사를 불러오는 중입니다.</small></div>
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body></html>`;
 }
 function sourceErrorHtml(code){
-  return `<!doctype html><html lang="ko"><meta charset="utf-8"><body style="font-family:system-ui;padding:30px;background:#fff4ed"><h3>${code} 불러오기 실패</h3><p>source_data 폴더가 index.html과 함께 있는지 확인하세요.</p></body></html>`;
+  return `<!doctype html><html lang="ko"><meta charset="utf-8"><body style="font-family:system-ui;padding:30px;background:#fff4ed"><h3>${code} 불러오기 실패</h3><p>source_data 폴더가 index.html과 함께 있는지 확인하세요.</p>
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body></html>`;
 }
 function loadSourceData(code,done){
   if(CASE_HTML[code]){done();return;}
@@ -1215,5 +1901,514 @@ function enhanceLegacyCaseIcons(){
 document.getElementById('caseFrame')?.addEventListener('load',()=>setTimeout(enhanceLegacyCaseIcons,80));
 /* ===== End legacy icon enhancer ===== */
 </script>
+
+<style data-unified-case-ui="v6.1">
+/* ===== 단원 사건 목록 통합 ===== */
+.case-grid.unified-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.unified-guide{grid-column:1/-1;padding:11px 14px;border-radius:12px;background:#fffaf1;border:1px solid #d5b996;border-left:5px solid #765037;font-size:12px;line-height:1.55;color:#5b4738}
+.case-file.unified-case-card{display:grid!important;grid-template-columns:54px 1fr auto!important;gap:12px!important;align-items:center!important;min-height:104px!important;padding:14px 16px!important;border:1px solid #c9aa84!important;background:#fffaf1!important;border-radius:13px!important;box-shadow:0 4px 10px rgba(79,49,29,.06)!important}
+.case-file.unified-case-card:hover{transform:translateY(-2px);border-color:#8e6746!important;box-shadow:0 7px 15px rgba(79,49,29,.11)!important}
+.case-file.unified-case-card.solved{border-color:#89a083!important;background:#f8fbf5!important}
+.unified-icon-wrap{width:50px;height:50px;border-radius:12px;background:#f0dfc6;border:1px solid #d3b48d;display:grid;place-items:center;overflow:hidden}
+.unified-icon-wrap img{width:42px;height:42px;object-fit:contain}
+.unified-card-body{min-width:0}.unified-card-top{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}.unified-card-code{font-size:10px;font-weight:950;color:#65472f;background:#ead3ad;border:1px solid #cda673;border-radius:7px;padding:4px 7px}.unified-card-type{font-size:9px;font-weight:900;color:#746457;background:#eee5d8;border-radius:999px;padding:4px 7px}
+.unified-case-card .case-title{font-size:14px!important;line-height:1.4!important;margin:0!important;font-weight:950!important;color:#261d18!important}.unified-meta{font-size:10px;color:#806e5d;margin-top:5px;line-height:1.35}.unified-case-card .case-state{font-size:10px!important;white-space:nowrap}
+@media(max-width:760px){.case-grid.unified-grid{grid-template-columns:1fr}.case-file.unified-case-card{grid-template-columns:48px 1fr auto!important;padding:12px!important}.unified-icon-wrap{width:44px;height:44px}.unified-icon-wrap img{width:38px;height:38px}}
+</style>
+<script data-unified-case-ui="v6.0">
+(function(){
+  const ICON_BASE='assets/ui_icons/';
+  function reps(){ try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES:[]}catch(e){return[]} }
+  function iconForText(text){
+    const t=(text||'').replace(/\s+/g,' ');
+    if(/전쟁|전투|군사|장용영|왜군|침입|항쟁|정벌|성곽|무신|군대|수군|병자|임진|몽골|거란|전쟁/.test(t)) return 'war.png';
+    if(/외교|사신|교린|통신사|연행|담판|조약|후금|청나라|일본|여진|교역|국교|당나라/.test(t)) return 'diplomacy.png';
+    if(/시장|상업|경제|화폐|상평통보|공인|장시|농업|모내기|상품|무역|세금|대동법|공납|재정/.test(t)) return 'economy.png';
+    if(/신분|노비|가족|혼인|향촌|백성|농민|봉기|생활|사회|공명첩|족보|촌락/.test(t)) return 'society.png';
+    if(/문화|불교|유물|그림|풍속화|산수화|실록|직지|훈민정음|규장각|책|학문|서원|성리학|과학|인쇄|천문|금동|석굴|청자/.test(t)) return 'culture.png';
+    if(/왕|정치|붕당|탕평|관청|제도|재상|관리|왕권|개혁|과거|정부|통치|회의|비변사|법|시무/.test(t)) return 'government.png';
+    return 'source-analysis.png';
+  }
+  window.hdUnifiedIconForText=iconForText;
+
+  function unitCounts(u){
+    const old=CASES.filter(c=>c.unit===u), src=reps().filter(c=>c.unit===u);
+    const doneOld=old.filter(c=>solved(c)).length, doneSrc=src.filter(c=>sourceSolved(c)).length;
+    return {old,src,done:doneOld+doneSrc,total:old.length+src.length};
+  }
+  window.updateProgress=function(){
+    const src=reps();
+    const doneOld=CASES.filter(c=>solved(c)).length;
+    const doneSrc=src.filter(c=>sourceSolved(c)).length;
+    const n=doneOld+doneSrc,total=CASES.length+src.length;
+    const pct=total?Math.round(n/total*1000)/10:0;
+    const solvedTop=document.getElementById('solvedTop'); if(solvedTop) solvedTop.textContent=n;
+    const percentTop=document.getElementById('percentTop'); if(percentTop) percentTop.textContent=pct;
+    const boardCount=document.getElementById('boardCount'); if(boardCount) boardCount.textContent=`${n} / ${total}`;
+    const boardText=document.getElementById('boardText'); if(boardText) boardText.textContent=`사건 해결 · ${pct}%`;
+    const boardFill=document.getElementById('boardFill'); if(boardFill) boardFill.style.width=pct+'%';
+    for(let u=1;u<=6;u++){
+      const x=unitCounts(u), el=document.getElementById(`u${u}count`), h=document.getElementById(`unitHot${u}`);
+      if(el) el.textContent=`${x.done}/${x.total}`;
+      if(h) h.classList.toggle('done',x.total>0&&x.done===x.total);
+    }
+  };
+
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], x=unitCounts(u);
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${x.done}/${x.total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide'; guide.textContent='사료 분석 사건과 탐구 사건을 한 목록에서 확인합니다. 각 사건 카드를 눌러 바로 수사를 시작하세요.'; grid.appendChild(guide);
+    const items=[];
+    x.src.forEach(c=>items.push({kind:'source',c}));
+    x.old.forEach(c=>items.push({kind:'old',c}));
+    items.forEach(({kind,c})=>{
+      const isSource=kind==='source'; const done=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(done?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=iconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||''));
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="${ICON_BASE+icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${isSource?'학습지 '+c.ws:'CASE '+c.code}</span><span class="unified-card-type">${isSource?'사료 분석':'탐구 사건'}</span></div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${done?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  window.showOverview=function(){
+    const grid=document.getElementById('overviewGrid'); grid.innerHTML='';
+    for(let u=1;u<=6;u++){
+      const meta=UNITS[u],x=unitCounts(u),pct=x.total?Math.round(x.done/x.total*100):0;
+      const div=document.createElement('div');div.className='overview-item';
+      div.innerHTML=`<b>${meta.roman}단원 · ${meta.name}</b><div class="small" style="margin-bottom:6px">${x.done} / ${x.total} 사건 해결</div><div class="mini-bar"><div class="mini-fill" style="width:${pct}%"></div></div>`;
+      div.onclick=()=>{hideOverview();openUnit(u)};div.style.cursor='pointer';grid.appendChild(div);
+    }
+    document.getElementById('overviewModal').classList.add('show');
+  };
+
+  // 기존 44개 사건에 적용할 공통 런타임 보정 스크립트
+  const originalPatch=window.patchCaseForPacing;
+  if(typeof originalPatch==='function'){
+    window.patchCaseForPacing=function(caseHtml,code){
+      let html=originalPatch(caseHtml,code);
+      if(html.includes('data-legacy-case-runtime="v6.0"')) return html;
+      const css=`<style data-legacy-case-runtime="v6.0">html,body{height:auto!important;min-height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain!important;-webkit-overflow-scrolling:touch!important;scroll-behavior:auto!important}.hd-modal-img{width:44px;height:44px;object-fit:contain;display:block}.modal-icon{overflow:hidden!important;display:grid!important;place-items:center!important}.reward-actions .hd-report-btn{order:-10}.screen{height:auto!important;overflow:visible!important}</style>`;
+      const js=`(function(){\n`+
+      `function iconFile(t){t=(t||'').replace(/\\s+/g,' ');if(/전쟁|전투|군사|장용영|왜군|침입|항쟁|정벌|성곽|무신|군대|수군|병자|임진|몽골|거란/.test(t))return 'war.png';if(/외교|사신|교린|통신사|연행|담판|조약|후금|청나라|일본|여진|교역|국교|당나라/.test(t))return 'diplomacy.png';if(/시장|상업|경제|화폐|상평통보|공인|장시|농업|모내기|상품|무역|세금|대동법|공납|재정/.test(t))return 'economy.png';if(/신분|노비|가족|혼인|향촌|백성|농민|봉기|생활|사회|공명첩|족보|촌락/.test(t))return 'society.png';if(/문화|불교|유물|그림|풍속화|산수화|실록|직지|훈민정음|규장각|책|학문|서원|성리학|과학|인쇄|천문|금동|석굴|청자/.test(t))return 'culture.png';if(/왕|정치|붕당|탕평|관청|제도|재상|관리|왕권|개혁|과거|정부|통치|회의|비변사|법/.test(t))return 'government.png';return 'source-analysis.png'}\n`+
+      `function url(f){try{return new URL('assets/ui_icons/'+f,parent.location.href).href}catch(e){return 'assets/ui_icons/'+f}}\n`+
+      `function refreshModalIcon(){var el=document.getElementById('modalIcon')||document.querySelector('.modal-icon');if(!el)return;var title=(document.getElementById('modalTitle')||{}).textContent||el.closest('.modal-card')?.textContent||'';var f=iconFile(title);if(el.dataset.hdFile===f)return;el.innerHTML='<img class="hd-modal-img" alt="">';el.querySelector('img').src=url(f);el.dataset.hdFile=f}\n`+
+      `if(typeof window.showClue==='function'){var oldShow=window.showClue;window.showClue=function(){var r=oldShow.apply(this,arguments);setTimeout(refreshModalIcon,0);return r}}\n`+
+      `var mo=new MutationObserver(function(){refreshModalIcon()});mo.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class']});\n`+
+      `function addReportButton(){var a=document.querySelector('.reward-actions');if(!a||a.querySelector('.hd-report-btn'))return;var b=document.createElement('button');b.className='btn hd-report-btn';b.textContent='사건보고서 보기';b.onclick=function(){try{if(typeof closeReward==='function')closeReward();else document.getElementById('rewardModal')?.classList.remove('show')}catch(e){};try{if(typeof setActiveScreen==='function'&&document.getElementById('stage5'))setActiveScreen('stage5');else if(typeof goStage==='function')goStage(5)}catch(e){}};a.prepend(b)}\n`+
+      `addReportButton();setTimeout(addReportButton,100);\n`+
+      `document.documentElement.style.overflowY='auto';document.body.style.overflowY='auto';document.documentElement.style.height='auto';document.body.style.height='auto';\n`+
+      `document.addEventListener('wheel',function(e){if(e.ctrlKey)return;var modal=e.target.closest&&e.target.closest('.modal-card');if(modal&&modal.scrollHeight>modal.clientHeight+2){modal.scrollTop+=e.deltaY;e.preventDefault();return}var s=document.scrollingElement||document.documentElement;if(s.scrollHeight>s.clientHeight+2){s.scrollTop+=e.deltaY;e.preventDefault()}},{passive:false});\n`+
+      `})();`;
+      const injection=css+'<scr'+'ipt>'+js+'</scr'+'ipt>';
+      return html.includes('
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body>')?html.replace('
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body>',injection+'
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
+</body>'):html+injection;
+    };
+  }
+
+  // 정적 표기 보정
+  const brand=document.querySelector('.brand .small'); if(brand) brand.textContent='통합 사건 수사본부 · 75개 사건';
+  const board=document.getElementById('boardCount'); if(board&&/44/.test(board.textContent)) board.textContent='0 / 75';
+  updateProgress();
+})();
+</script>
+
+<script data-display-numbering="v6.1">
+(function(){
+  function sourceList(u){
+    try{return (typeof SOURCE_CASES!=='undefined'&&Array.isArray(SOURCE_CASES))?SOURCE_CASES.filter(c=>c.unit===u):[]}catch(e){return []}
+  }
+  function oldList(u){return CASES.filter(c=>c.unit===u)}
+  function displayNoSource(c){
+    const s=sourceList(c.unit); const i=s.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${Math.max(1,i+1)}`;
+  }
+  function displayNoOld(c){
+    const s=sourceList(c.unit), o=oldList(c.unit); const i=o.findIndex(x=>x.code===c.code);
+    return `사건 ${c.unit}-${s.length+Math.max(1,i+1)}`;
+  }
+  window.hdDisplayNoSource=displayNoSource;
+  window.hdDisplayNoOld=displayNoOld;
+
+  // 단원 사건 목록: 학생에게 보이는 번호를 단원별 연속 번호로 통일
+  const priorOpenUnit=window.openUnit;
+  window.openUnit=function(u){
+    currentUnit=u;
+    document.getElementById('home').style.display='none';
+    document.getElementById('notebookPage').classList.remove('show');
+    document.getElementById('unitPage').classList.add('show');
+    const meta=UNITS[u], srcCases=sourceList(u), oldCases=oldList(u);
+    const doneSrc=srcCases.filter(c=>sourceSolved(c)).length, doneOld=oldCases.filter(c=>solved(c)).length;
+    const total=srcCases.length+oldCases.length, done=doneSrc+doneOld;
+    document.getElementById('unitNo').textContent=`${meta.roman}단원 · ${done}/${total} 해결`;
+    document.getElementById('unitTitle').textContent=meta.name;
+    const grid=document.getElementById('caseGrid'); grid.innerHTML=''; grid.className='case-grid unified-grid';
+    const guide=document.createElement('div'); guide.className='unified-guide';
+    guide.textContent='모든 수사를 하나의 사건 번호로 표시합니다. 사료 분석 사건은 관련 학습지 번호를 보조 정보로 함께 표시합니다.';
+    grid.appendChild(guide);
+    const items=[];
+    srcCases.forEach((c,i)=>items.push({kind:'source',c,no:`사건 ${u}-${i+1}`}));
+    oldCases.forEach((c,i)=>items.push({kind:'old',c,no:`사건 ${u}-${srcCases.length+i+1}`}));
+    items.forEach(({kind,c,no})=>{
+      const isSource=kind==='source', isDone=isSource?sourceSolved(c):solved(c);
+      const b=document.createElement('button'); b.className='case-file unified-case-card'+(isDone?' solved':'');
+      b.onclick=()=>isSource?openSourceCase(c.code):openCase(c.code);
+      const icon=window.hdUnifiedIconForText?window.hdUnifiedIconForText((c.title||'')+' '+(c.topic||'')+' '+(c.source_type||'')):'source-analysis.png';
+      const sub=isSource?`<span class="unified-card-type">학습지 ${c.ws} 연계</span>`:`<span class="unified-card-type">탐구 사건</span>`;
+      b.innerHTML=`<div class="unified-icon-wrap"><img src="assets/ui_icons/${icon}" alt=""></div><div class="unified-card-body"><div class="unified-card-top"><span class="unified-card-code">${no}</span>${sub}</div><div class="case-title">${c.title}</div><div class="unified-meta">${isSource?((c.source_type||'자료')+' · '+(c.thinking||'자료 해석')):'역사 탐정형 사건'}</div></div><div class="case-state">${isDone?'✓ 완료':'미해결'}</div>`;
+      grid.appendChild(b);
+    });
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 탐정수첩에서도 CASE/학습지 번호 대신 같은 사건 번호 체계를 사용
+  window.showNotebook=function(){
+    document.getElementById('home').style.display='none';
+    document.getElementById('unitPage').classList.remove('show');
+    document.getElementById('notebookPage').classList.add('show');
+    const sourceGrid=document.getElementById('sourceStampGrid');
+    const extraGrid=document.getElementById('stampGrid');
+    sourceGrid.innerHTML=''; extraGrid.innerHTML='';
+    const reps=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES:[];
+    let sourceDone=0;
+    reps.forEach(c=>{
+      const got=sourceStamped(c); if(got)sourceDone++;
+      const div=document.createElement('div'); div.className='record source-record'+(got?' got':''); div.onclick=()=>openSourceCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${SOURCE_STAMP_IMAGES[c.code]||('source_stamps/'+c.code+'.svg')}" alt="${displayNoSource(c)} 스탬프"></div><div><div class="small">${displayNoSource(c)} · 학습지 ${c.ws} 연계</div><div class="source-record-title">${c.title}</div><div class="source-record-meta">${c.source_type||'자료'} · ${c.thinking||'자료 해석'}</div><div class="stamp-caption">${got?(c.stamp+' 스탬프 획득'):'사건 해결 후 획득'}</div></div>`;
+      sourceGrid.appendChild(div);
+    });
+    let extraDone=0;
+    CASES.forEach(c=>{
+      const got=stamped(c); if(got)extraDone++;
+      const div=document.createElement('div'); div.className='record'+(got?' got':''); div.onclick=()=>openCase(c.code);
+      div.innerHTML=`<div class="mark">${got?'◉ 스탬프 획득':'○ 미해결'}</div><div class="stamp-img-wrap"><img class="stamp-img" src="${STAMP_IMAGES[c.code]||''}" alt="${displayNoOld(c)} 스탬프"></div><div><div class="small">${displayNoOld(c)}</div><div style="font-weight:900;line-height:1.35">${c.title}</div><div class="stamp-caption">${got?'수사 완료 스탬프':'사건 해결 후 획득'}</div></div>`;
+      extraGrid.appendChild(div);
+    });
+    const sourceTotal=reps.length||31, extraTotal=CASES.length, totalDone=sourceDone+extraDone,total=sourceTotal+extraTotal;
+    const a=document.getElementById('sourceStampCount'); if(a)a.textContent=`${sourceDone} / ${sourceTotal}`;
+    const b=document.getElementById('extraStampCount'); if(b)b.textContent=`${extraDone} / ${extraTotal}`;
+    document.getElementById('notebookSummary').innerHTML=`<div class="summary-box"><b>${sourceDone}/${sourceTotal}</b><span>사료 분석 스탬프</span></div><div class="summary-box"><b>${extraDone}/${extraTotal}</b><span>탐구 사건 스탬프</span></div><div class="summary-box"><b>${totalDone}/${total}</b><span>전체 스탬프</span></div>`;
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // 대표 사료 사건을 열 때 상단 뷰어 제목도 사건 번호 우선 표시
+  const priorOpenSource=window.openSourceCase;
+  window.openSourceCase=function(code){
+    priorOpenSource(code);
+    const c=(typeof SOURCE_CASES!=='undefined')?SOURCE_CASES.find(x=>x.code===code):null;
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoSource(c)} · 학습지 ${c.ws} 연계 · ${c.title}`;}
+  };
+
+  // 기존 탐구 사건도 상단 뷰어 제목은 같은 사건 번호를 사용
+  const priorOpenOld=window.openCase;
+  window.openCase=function(code){
+    const r=priorOpenOld(code);
+    const c=CASES.find(x=>x.code===code);
+    if(c){const t=document.getElementById('viewerTitle'); if(t)t.textContent=`${displayNoOld(c)} · ${c.title}`;}
+    return r;
+  };
+})();
+</script>
+
 </body>
 </html>
